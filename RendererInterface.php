@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Mindy Framework.
  * (c) 2017 Maxim Falaleev
@@ -18,7 +20,7 @@ interface RendererInterface
      *
      * @return string
      */
-    public function render($template, array $data = []);
+    public function render(string $template, array $data = []);
 
     /**
      * @param string $template string template
@@ -26,5 +28,5 @@ interface RendererInterface
      *
      * @return string
      */
-    public function renderString($template, array $data = []);
+    public function renderString(string $template, array $data = []);
 }

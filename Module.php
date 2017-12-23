@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Mindy Framework.
  * (c) 2017 Maxim Falaleev
@@ -10,18 +12,46 @@
 
 namespace Mindy\Template;
 
+use Mindy\Template\Node\ExtendsNode;
+use Mindy\Template\Node\ImportNode;
+use Mindy\Template\Node\NodeList;
+
 /**
  * Class Module.
  */
 class Module
 {
+    /**
+     * @var ExtendsNode
+     */
     protected $extends;
+    /**
+     * @var ImportNode[]
+     */
     protected $imports;
+    /**
+     * @var CompilerInterface[]
+     */
     protected $blocks;
+    /**
+     * @var CompilerInterface[]
+     */
     protected $macros;
+    /**
+     * @var NodeList
+     */
     protected $body;
 
-    public function __construct($extends, $imports, $blocks, $macros, $body)
+    /**
+     * Module constructor.
+     *
+     * @param ExtendsNode|null $extends
+     * @param array            $imports
+     * @param array            $blocks
+     * @param array            $macros
+     * @param NodeList         $body
+     */
+    public function __construct(ExtendsNode $extends = null, array $imports, array $blocks, array $macros, NodeList $body)
     {
         $this->extends = $extends;
         $this->imports = $imports;
@@ -30,9 +60,15 @@ class Module
         $this->body = $body;
     }
 
-    public function compile($module, $compiler, $indent = 0)
+    /**
+     * @param string            $module
+     * @param CompilerInterface $compiler
+     * @param int               $indent
+     */
+    public function compile(string $module, CompilerInterface $compiler, $indent = 0)
     {
-        $class = Loader::CLASS_PREFIX.md5($module);
+        $name = ClassGenerator::generateName($module);
+        $class = ClassGenerator::generateClass($module);
 
         $compiler->raw("<?php\n");
         $moduleName = trim(preg_replace('/(\s\s+|[\n\r])/', ' ', $module));
@@ -45,7 +81,7 @@ class Module
         $compiler->raw("{\n", $indent);
 
         $compiler->raw('const NAME = ', $indent + 1);
-        $compiler->repr(md5($module));
+        $compiler->repr($name);
         $compiler->raw(";\n\n");
 
         $compiler->raw(

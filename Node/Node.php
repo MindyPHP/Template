@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Mindy Framework.
  * (c) 2017 Maxim Falaleev
@@ -8,7 +10,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Mindy\Template;
+namespace Mindy\Template\Node;
+
+use Mindy\Template\CompilerInterface;
 
 /**
  * Class Node.
@@ -39,19 +43,19 @@ class Node
     }
 
     /**
-     * @param \Mindy\Template\Compiler $compiler
+     * @param CompilerInterface $compiler
      * @param $indent
      */
-    public function addTraceInfo(Compiler $compiler, $indent)
+    public function addTraceInfo(CompilerInterface $compiler, $indent)
     {
         $compiler->addTraceInfo($this, $indent);
     }
 
     /**
-     * @param Compiler $compiler
-     * @param int      $indent
+     * @param CompilerInterface $compiler
+     * @param int               $indent
      */
-    public function compile(Compiler $compiler, $indent = 0)
+    public function compile(CompilerInterface $compiler, $indent = 0)
     {
     }
 }

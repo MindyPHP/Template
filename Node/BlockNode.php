@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Mindy Framework.
  * (c) 2017 Maxim Falaleev
@@ -10,8 +12,7 @@
 
 namespace Mindy\Template\Node;
 
-use Mindy\Template\Compiler;
-use Mindy\Template\Node;
+use Mindy\Template\CompilerInterface;
 
 /**
  * Class BlockNode.
@@ -28,7 +29,7 @@ class BlockNode extends Node
         $this->body = $body;
     }
 
-    public function compile(Compiler $compiler, $indent = 0)
+    public function compile(CompilerInterface $compiler, $indent = 0)
     {
         $compiler->raw("\n");
         $compiler->addTraceInfo($this, $indent, false);

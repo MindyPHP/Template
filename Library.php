@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Mindy Framework.
  * (c) 2017 Maxim Falaleev
@@ -10,41 +12,13 @@
 
 namespace Mindy\Template;
 
+use Mindy\Template\Library\AbstractLibrary;
+
 /**
  * Class Library.
+ *
+ * @deprecated since 4.0 use \Mindy\Component\Template\Library\AbstractLibrary
  */
-abstract class Library
+abstract class Library extends AbstractLibrary
 {
-    /**
-     * @var \Mindy\Template\Parser
-     */
-    protected $parser;
-    /**
-     * @var \Mindy\Template\TokenStream
-     */
-    protected $stream;
-
-    /**
-     * @return array
-     */
-    abstract public function getHelpers();
-
-    /**
-     * @return array
-     */
-    abstract public function getTags();
-
-    public function setParser(Parser $parser)
-    {
-        $this->parser = $parser;
-
-        return $this;
-    }
-
-    public function setStream(TokenStream $stream)
-    {
-        $this->stream = $stream;
-
-        return $this;
-    }
 }

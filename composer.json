@@ -5,6 +5,12 @@
         "template",
         "templating"
     ],
+    "config": {
+        "preferred-install": {
+            "*": "dist"
+        },
+        "sort-packages": true
+    },
     "type": "library",
     "license": "MIT",
     "autoload": {
@@ -15,11 +21,19 @@
             "/Tests/"
         ]
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Mindy\\Template\\Tests\\": "./Tests/"
+        }
+    },
     "require": {
-        "php": ">=5.5.9"
+        "php": ">=7.0",
+        "psr/log": "^1.0",
+        "symfony/filesystem": "^3.4"
     },
     "require-dev": {
-        "phpunit/phpunit": "~4.0"
+        "phpunit/phpunit": "^6.5",
+        "symfony/var-dumper": "^3.4"
     },
     "authors": [
         {
@@ -30,11 +44,5 @@
             "name": "Nofriandi Ramenta",
             "email": "nramenta@gmail.com"
         }
-    ],
-    "minimum-stability": "dev",
-    "extra": {
-        "branch-alias": {
-            "dev-master": "3.6.8-dev"
-        }
-    }
+    ]
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Mindy Framework.
  * (c) 2017 Maxim Falaleev
@@ -10,8 +12,7 @@
 
 namespace Mindy\Template\Expression;
 
-use Mindy\Template\Compiler;
-use Mindy\Template\Expression;
+use Mindy\Template\CompilerInterface;
 
 /**
  * Class FilterExpression.
@@ -56,7 +57,7 @@ class FilterExpression extends Expression
         return $this;
     }
 
-    public function compile(Compiler $compiler, $indent = 0)
+    public function compile(CompilerInterface $compiler, $indent = 0)
     {
         static $rawNames = ['raw', 'safe'];
 

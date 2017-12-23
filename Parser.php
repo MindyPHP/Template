@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Mindy Framework.
  * (c) 2017 Maxim Falaleev
@@ -11,6 +13,7 @@
 namespace Mindy\Template;
 
 use Mindy\Template\Expression\FilterExpression;
+use Mindy\Template\Node\NodeList;
 
 /**
  * Class Parser.

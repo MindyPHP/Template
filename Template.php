@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Mindy Framework.
  * (c) 2017 Maxim Falaleev
@@ -17,14 +19,14 @@ use RuntimeException;
 /**
  * Class Template.
  */
-abstract class Template
+abstract class Template implements TemplateInterface
 {
     /**
      * @var string
      */
     public $helperClassName = '\Mindy\Template\Helper';
     /**
-     * @var Loader
+     * @var TemplateEngine
      */
     protected $loader;
     /**
@@ -59,11 +61,11 @@ abstract class Template
     /**
      * Template constructor.
      *
-     * @param Loader                            $loader
+     * @param TemplateEngine                    $loader
      * @param array                             $helpers
      * @param array|VariableProviderInterface[] $variablesProviders
      */
-    public function __construct(Loader $loader, $helpers = [], $variablesProviders = [])
+    public function __construct(TemplateEngine $loader, $helpers = [], $variablesProviders = [])
     {
         $this->loader = $loader;
         $this->helpers = $helpers;
@@ -81,10 +83,11 @@ abstract class Template
             throw new Exception('Template cannot be inherited from himself: '.static::NAME);
         }
         try {
-            return $this->loader->load($template, static::NAME);
+            return $this->loader->load($template);
         } catch (Exception $e) {
-            throw new RuntimeException(sprintf('error extending %s (%s) from %s line %d',
-                var_export($template, true), $e->getMessage(), static::NAME,
+            throw new RuntimeException(sprintf('error extending %s (%s) line %d',
+                var_export($template, true),
+                $e->getMessage(),
                 $this->getLineTrace($e)
             ));
         }
@@ -93,10 +96,11 @@ abstract class Template
     public function loadInclude($template)
     {
         try {
-            return $this->loader->load($template, static::NAME);
+            return $this->loader->load($template);
         } catch (Exception $e) {
-            throw new RuntimeException(sprintf('error including %s (%s) from %s line %d',
-                var_export($template, true), $e->getMessage(), static::NAME,
+            throw new RuntimeException(sprintf('error including %s (%s) line %d',
+                var_export($template, true),
+                $e->getMessage(),
                 $this->getLineTrace($e)
             ));
         }
@@ -105,10 +109,11 @@ abstract class Template
     public function loadImport($template)
     {
         try {
-            return $this->loader->load($template, static::NAME)->getMacros();
+            return $this->loader->load($template)->getMacros();
         } catch (Exception $e) {
-            throw new RuntimeException(sprintf('error importing %s (%s) from %s line %d',
-                var_export($template, true), $e->getMessage(), static::NAME,
+            throw new RuntimeException(sprintf('error importing %s (%s) line %d',
+                var_export($template, true),
+                $e->getMessage(),
                 $this->getLineTrace($e)
             ));
         }
@@ -224,7 +229,7 @@ abstract class Template
      *
      * @return string
      */
-    public function render($context = [], $blocks = [], $macros = [], $imports = [])
+    public function render(array $context = [], array $blocks = [], array $macros = [], array $imports = []): string
     {
         ob_start();
         $this->display($this->mergeContext($context), $blocks, $macros, $imports);
@@ -243,7 +248,7 @@ abstract class Template
             $context = array_merge($context, $variableProvider->getData());
         }
 
-        return $context;
+        return array_merge($context, ['__context' => array_keys($context)]);
     }
 
     public function iterate($context, $seq)

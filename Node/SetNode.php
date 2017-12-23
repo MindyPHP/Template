@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Mindy Framework.
  * (c) 2017 Maxim Falaleev
@@ -10,8 +12,7 @@
 
 namespace Mindy\Template\Node;
 
-use Mindy\Template\Compiler;
-use Mindy\Template\Node;
+use Mindy\Template\CompilerInterface;
 use Mindy\Template\NodeList;
 
 /**
@@ -31,7 +32,7 @@ class SetNode extends Node
         $this->value = $value;
     }
 
-    public function compile(Compiler $compiler, $indent = 0)
+    public function compile(CompilerInterface $compiler, $indent = 0)
     {
         $name = "\$context['$this->name']";
         if ($this->value instanceof NodeList) {

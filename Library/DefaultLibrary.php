@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Mindy Framework.
  * (c) 2017 Maxim Falaleev
@@ -8,9 +10,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Mindy\Template;
+namespace Mindy\Template\Library;
 
-class DefaultLibrary extends Library
+/**
+ * Class DefaultLibrary
+ */
+class DefaultLibrary extends AbstractLibrary
 {
     /**
      * @return array
@@ -32,13 +37,5 @@ class DefaultLibrary extends Library
             'strtotime' => 'strtotime',
             'strtr' => 'strtr',
         ];
-    }
-
-    /**
-     * @return array
-     */
-    public function getTags()
-    {
-        return [];
     }
 }

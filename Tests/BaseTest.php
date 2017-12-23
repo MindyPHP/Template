@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Mindy Framework.
  * (c) 2017 Maxim Falaleev
@@ -10,8 +12,12 @@
 
 namespace Mindy\Template\Tests;
 
-use Mindy\Template\Loader;
+use Mindy\Template\Finder\TemplateFinder;
+use Mindy\Template\TemplateEngine;
+use Mindy\Template\LoaderMode;
 use Mindy\Template\Renderer;
+use PHPUnit\Framework\TestCase;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * All rights reserved.
@@ -24,22 +30,18 @@ use Mindy\Template\Renderer;
  * @site http://studio107.ru
  * @date 01/08/14.08.2014 13:51
  */
-class BaseTest extends \PHPUnit_Framework_TestCase
+class BaseTest extends TestCase
 {
     public function tearDown()
     {
-        foreach (glob(__DIR__.'/cache/*.php') as $file) {
-            unlink($file);
-        }
+        (new Filesystem())->remove(__DIR__ . '/cache');
     }
 
     protected function getTemplate()
     {
-        return new Loader([
-            'source' => __DIR__.'/templates',
-            'target' => __DIR__.'/cache',
-            'mode' => Loader::RECOMPILE_ALWAYS,
-        ]);
+        $finder = new TemplateFinder(__DIR__.'/templates');
+
+        return new TemplateEngine($finder, __DIR__.'/cache', LoaderMode::RECOMPILE_ALWAYS);
     }
 
     public function providerLoadFromString()
@@ -123,22 +125,20 @@ class BaseTest extends \PHPUnit_Framework_TestCase
 
     public function testRenderer()
     {
-        $renderer = new Renderer([
-            'source' => function () {
-                $templates = [__DIR__.'/templates'];
-                $modulesTemplates = glob(__DIR__.'/Modules/*/templates');
-                $themesTemplates = glob(__DIR__.'/themes/*/templates');
+        $paths = array_merge(
+            glob(__DIR__.'/themes/*/templates'),
+            [__DIR__.'/templates'],
+            glob(__DIR__.'/Modules/*/templates')
+        );
 
-                return array_merge($templates, $modulesTemplates, $themesTemplates);
-            },
-            'target' => __DIR__.'/cache',
-            'mode' => Renderer::RECOMPILE_ALWAYS,
-        ]);
+        $finder = new TemplateFinder($paths);
+        $renderer = new TemplateEngine($finder, __DIR__.'/cache', LoaderMode::RECOMPILE_ALWAYS);
+
         $this->assertEquals('foobar', $renderer->render('example.html', ['data' => 'foobar']));
         $this->assertEquals('foobar', $renderer->render('core/index.html', ['data' => 'foobar']));
         $this->assertEquals('foobar', $renderer->renderString('{{ data }}', ['data' => 'foobar']));
-        $this->assertInstanceOf(Renderer::class, $renderer->compile('core/index.html', ['data' => 'foobar']));
+        $this->assertInstanceOf(TemplateEngine::class, $renderer->compile('core/index.html', ['data' => 'foobar']));
 
-        $this->assertTrue($renderer->isValid('core/index.html', $error));
+        $this->assertTrue($renderer->isValid('core/index.html'));
     }
 }

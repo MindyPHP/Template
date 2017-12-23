@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Mindy Framework.
  * (c) 2017 Maxim Falaleev
@@ -11,8 +13,13 @@
 namespace Mindy\Template;
 
 /**
- * Class Renderer.
+ * Interface NodeInterface
  */
-class Renderer extends Loader implements RendererInterface
+interface NodeInterface
 {
+    /**
+     * @param Compiler $compiler
+     * @param int      $indent
+     */
+    public function compile(Compiler $compiler, int $indent = 0);
 }

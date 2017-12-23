@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Mindy Framework.
  * (c) 2017 Maxim Falaleev
@@ -10,14 +12,14 @@
 
 namespace Mindy\Template\Expression;
 
-use Mindy\Template\Compiler;
+use Mindy\Template\CompilerInterface;
 
 /**
  * Class InclusionExpression.
  */
 class InclusionExpression extends LogicalExpression
 {
-    public function compile(Compiler $compiler, $indent = 0)
+    public function compile(CompilerInterface $compiler, $indent = 0)
     {
         // if (is_array($haystack))
 

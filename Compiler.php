@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Mindy Framework.
  * (c) 2017 Maxim Falaleev
@@ -10,15 +12,22 @@
 
 namespace Mindy\Template;
 
+use Mindy\Template\Node\Node;
 use RuntimeException;
 
 /**
  * Class Compiler.
  */
-class Compiler
+class Compiler implements CompilerInterface
 {
+    /**
+     * @var resource
+     */
     protected $fp;
     protected $node;
+    /**
+     * @var int
+     */
     protected $line;
     protected $trace;
 
@@ -35,12 +44,9 @@ class Compiler
     }
 
     /**
-     * @param $raw
-     * @param int $indent
-     *
-     * @return $this
+     * {@inheritdoc}
      */
-    public function raw($raw, $indent = 0)
+    public function raw(string $raw, int $indent = 0)
     {
         $this->line = $this->line + substr_count($raw, "\n");
         if (!fwrite($this->fp, str_repeat(' ', 4 * $indent).$raw)) {
@@ -51,20 +57,19 @@ class Compiler
     }
 
     /**
-     * @param $repr
-     * @param int $indent
+     * {@inheritdoc}
      */
-    public function repr($repr, $indent = 0)
+    public function repr($repr, int $indent = 0)
     {
         $this->raw(var_export($repr, true), $indent);
+
+        return $this;
     }
 
     /**
-     * @param $name
-     * @param $target
-     * @param int $indent
+     * {@inheritdoc}
      */
-    public function compile($name, $target, $indent = 0)
+    public function compile(string $name, string $target, $indent = 0)
     {
         if (!($this->fp = fopen($target, 'wb'))) {
             throw new RuntimeException('unable to create target file: '.$target);
@@ -104,16 +109,15 @@ class Compiler
     }
 
     /**
-     * @param Node $node
-     * @param int  $indent
-     * @param bool $line
+     * {@inheritdoc}
      */
-    public function addTraceInfo($node, $indent = 0, $line = true)
+    public function addTraceInfo(Node $node, int $indent = 0, bool $line = true)
     {
         $this->raw(
             '/* line '.$node->getLine().' -> '.($this->line + 1).
             " */\n", $indent
         );
+
         if ($line) {
             $this->trace[$this->line] = $node->getLine();
         }
@@ -124,7 +128,7 @@ class Compiler
      *
      * @return array|mixed
      */
-    public function getTraceInfo($export = false)
+    public function getTraceInfo(bool $export = false)
     {
         if ($export) {
             return str_replace(["\n", ' '], '', var_export($this->trace, true));

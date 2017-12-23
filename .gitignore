@@ -1,8 +1,7 @@
-vendor
-phpunit.xml
 .DS_Store
 .idea
-*.iml
 composer.lock
-Tests/cache/*
-!Tests/cache/.gitkeep
+phpunit.xml
+/vendor
+/Tests/cache
+/coverage

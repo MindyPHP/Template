@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Mindy Framework.
  * (c) 2017 Maxim Falaleev
@@ -10,8 +12,7 @@
 
 namespace Mindy\Template\Expression;
 
-use Mindy\Template\Compiler;
-use Mindy\Template\Expression;
+use Mindy\Template\CompilerInterface;
 
 /**
  * Class NameExpression.
@@ -26,17 +27,17 @@ class NameExpression extends Expression
         $this->name = $name;
     }
 
-    public function raw(Compiler $compiler, $indent = 0)
+    public function raw(CompilerInterface $compiler, $indent = 0)
     {
         $compiler->raw($this->name, $indent);
     }
 
-    public function repr(Compiler $compiler, $indent = 0)
+    public function repr(CompilerInterface $compiler, $indent = 0)
     {
         $compiler->repr($this->name, $indent);
     }
 
-    public function compile(Compiler $compiler, $indent = 0)
+    public function compile(CompilerInterface $compiler, $indent = 0)
     {
         $compiler->raw('(array_key_exists(\''.$this->name.'\', $context) ? ');
         $compiler->raw('$context[\''.$this->name.'\'] : null)');
