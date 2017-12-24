@@ -12,47 +12,42 @@ declare(strict_types=1);
 
 namespace Mindy\Template\Tests;
 
-use Mindy\Template\Finder\FinderInterface;
-use Mindy\Template\Finder\StaticTemplateFinder;
-
-class IncludeTest extends AbstractTemplateTestCase
+class SetNodeTest extends AbstractTemplateTestCase
 {
     protected function getTemplatePaths(): array
     {
         return [
-            'example.html' => 'just a text',
-            'example1.html' => 'example1',
-            'example2.html' => '{{ foo }}',
+            'macroses.html' => '{% macro example() %}hello world{% endmacro %}',
         ];
-    }
-
-    protected function getTemplateFinder(): FinderInterface
-    {
-        return new StaticTemplateFinder($this->getTemplatePaths());
     }
 
     public function providerInclude()
     {
         return [
             [
-                '{% include "example.html" %}',
-                'just a text',
+                '{% set x = 1 %}{{ x }}',
+                '1',
                 [],
             ],
             [
-                '{% include "example1.html" %}',
-                'example1',
+                '{% set x = ["x" => 1, "y" => 2] %}{{ x.x }}{{ x.y }}',
+                '12',
                 [],
             ],
             [
-                '{% include "example2.html" %}',
+                '{% set x = y %}{{ x }}',
+                '1',
+                ['y' => 1],
+            ],
+            [
+                '{% set x = y %}{{ x }}',
                 '',
                 [],
             ],
             [
-                '{% include "example2.html" with ["foo" => "foobar"] %}',
-                'foobar',
-                [],
+                '{% set x = y ? 1 : 2 %}{{ x }}',
+                '2',
+                ['y' => false],
             ],
         ];
     }

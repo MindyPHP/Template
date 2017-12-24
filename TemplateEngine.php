@@ -85,12 +85,12 @@ class TemplateEngine implements LoggerAwareInterface
     /**
      * Loader constructor.
      *
-     * @param FinderInterface $finder
-     * @param string|callable $target
-     * @param int             $mode
-     * @param bool            $autoescape
+     * @param FinderInterface|null $finder
+     * @param string|callable      $target
+     * @param int                  $mode
+     * @param bool                 $autoescape
      */
-    public function __construct(FinderInterface $finder, $target, $mode = LoaderMode::RECOMPILE_NORMAL, bool $autoescape = true)
+    public function __construct(FinderInterface $finder = null, $target, $mode = LoaderMode::RECOMPILE_NORMAL, bool $autoescape = true)
     {
         $this->finder = $finder;
         $this->target = is_callable($target) ? call_user_func($target) : $target;

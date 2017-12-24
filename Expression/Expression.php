@@ -17,6 +17,6 @@ use Mindy\Template\Node\Node;
 /**
  * Class Expression.
  */
-class Expression extends Node
+abstract class Expression extends Node
 {
 }

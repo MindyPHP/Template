@@ -29,7 +29,7 @@ interface FinderInterface
      *
      * @return string
      */
-    public function getContents(string $path): string;
+    public function getContents(string $path);
 
     /**
      * @param string $path

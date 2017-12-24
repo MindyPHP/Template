@@ -17,7 +17,7 @@ use Mindy\Template\CompilerInterface;
 /**
  * Class Node.
  */
-class Node
+abstract class Node
 {
     /**
      * @var int
@@ -55,7 +55,5 @@ class Node
      * @param CompilerInterface $compiler
      * @param int               $indent
      */
-    public function compile(CompilerInterface $compiler, $indent = 0)
-    {
-    }
+    abstract public function compile(CompilerInterface $compiler, $indent = 0);
 }

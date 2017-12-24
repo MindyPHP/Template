@@ -25,7 +25,7 @@ class TemplateFinder implements FinderInterface
     /**
      * TemplateFinder constructor.
      *
-     * @param string|array $paths
+     * @param $paths
      */
     public function __construct($paths)
     {
@@ -40,15 +40,15 @@ class TemplateFinder implements FinderInterface
         return $this->paths;
     }
 
+    /**
+     * @param $template
+     *
+     * @return \Generator
+     */
     protected function iteratePaths($template): \Generator
     {
         foreach ($this->paths as $path) {
-            $result = sprintf(
-                '%s/%s',
-                rtrim($path, '/'),
-                $template
-            );
-            yield $result;
+            yield sprintf('%s/%s', rtrim($path, '/'), ltrim($template, '/'));
         }
     }
 
@@ -81,12 +81,14 @@ class TemplateFinder implements FinderInterface
     }
 
     /**
-     * @param string $path
-     *
-     * @return string
+     * {@inheritdoc}
      */
-    public function getContents(string $path): string
+    public function getContents(string $path)
     {
-        return file_get_contents($path);
+        if (is_file($path)) {
+            return file_get_contents($path);
+        }
+
+        return null;
     }
 }

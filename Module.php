@@ -14,6 +14,7 @@ namespace Mindy\Template;
 
 use Mindy\Template\Node\ExtendsNode;
 use Mindy\Template\Node\ImportNode;
+use Mindy\Template\Node\Node;
 use Mindy\Template\Node\NodeList;
 
 /**
@@ -45,13 +46,13 @@ class Module
     /**
      * Module constructor.
      *
-     * @param ExtendsNode|null $extends
-     * @param array            $imports
-     * @param array            $blocks
-     * @param array            $macros
-     * @param NodeList         $body
+     * @param Node|null $extends
+     * @param array     $imports
+     * @param array     $blocks
+     * @param array     $macros
+     * @param NodeList  $body
      */
-    public function __construct(ExtendsNode $extends = null, array $imports, array $blocks, array $macros, NodeList $body)
+    public function __construct(Node $extends = null, array $imports, array $blocks, array $macros, NodeList $body)
     {
         $this->extends = $extends;
         $this->imports = $imports;

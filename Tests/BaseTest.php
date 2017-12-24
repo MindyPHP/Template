@@ -12,13 +12,6 @@ declare(strict_types=1);
 
 namespace Mindy\Template\Tests;
 
-use Mindy\Template\Finder\TemplateFinder;
-use Mindy\Template\TemplateEngine;
-use Mindy\Template\LoaderMode;
-use Mindy\Template\Renderer;
-use PHPUnit\Framework\TestCase;
-use Symfony\Component\Filesystem\Filesystem;
-
 /**
  * All rights reserved.
  *
@@ -30,64 +23,9 @@ use Symfony\Component\Filesystem\Filesystem;
  * @site http://studio107.ru
  * @date 01/08/14.08.2014 13:51
  */
-class BaseTest extends TestCase
+class BaseTest extends AbstractTemplateTestCase
 {
-    public function tearDown()
-    {
-        (new Filesystem())->remove(__DIR__ . '/cache');
-    }
-
-    protected function getTemplate()
-    {
-        $finder = new TemplateFinder(__DIR__.'/templates');
-
-        return new TemplateEngine($finder, __DIR__.'/cache', LoaderMode::RECOMPILE_ALWAYS);
-    }
-
-    public function providerLoadFromString()
-    {
-        return [
-            ['hello {{ world }}', 'hello world', ['world' => 'world']],
-            ['hello {{ world }}', 'hello ', []],
-            ['{% block content %}hello {{ world }}{% endblock %}', 'hello world', ['world' => 'world']],
-
-            ['{% extends "base.html" %}', '1', []],
-            ['{% extends "base.html" %}{% block content %}2{% endblock %}', '2', []],
-        ];
-    }
-
-    /**
-     * @dataProvider providerLoadFromString
-     */
-    public function testLoadFromString($template, $result, $data)
-    {
-        $tpl = $this->getTemplate()->loadFromString($template);
-        $this->assertEquals($tpl->render($data), $result);
-    }
-
-    public function providerLoad()
-    {
-        return [
-            ['main.html', '1', []],
-            ['main.html', '12', ['data' => 2]],
-            ['global_variable.html', '1', ['global_variable' => 1]],
-            ['loop.html', '123456', ['data' => [
-                [1, 2, 3],
-                [4, 5, 6],
-            ]]],
-        ];
-    }
-
-    /**
-     * @dataProvider providerLoad
-     */
-    public function testLoad($template, $result, $data)
-    {
-        $tpl = $this->getTemplate()->load($template);
-        $this->assertEquals($tpl->render($data), $result);
-    }
-
-    public function providerTemplate()
+    public function providerBase()
     {
         return [
             ['{{ a }}', ['a' => 'b'], 'b'],
@@ -111,7 +49,7 @@ class BaseTest extends TestCase
     }
 
     /**
-     * @dataProvider providerTemplate
+     * @dataProvider providerBase
      *
      * @param $template
      * @param array $data
@@ -119,26 +57,9 @@ class BaseTest extends TestCase
      */
     public function testTemplate($template, array $data, $result)
     {
-        $tpl = $this->getTemplate()->loadFromString($template);
-        $this->assertEquals($tpl->render($data), $result);
-    }
-
-    public function testRenderer()
-    {
-        $paths = array_merge(
-            glob(__DIR__.'/themes/*/templates'),
-            [__DIR__.'/templates'],
-            glob(__DIR__.'/Modules/*/templates')
+        $this->assertEquals(
+            $this->templateEngine->renderString($template, $data),
+            $result
         );
-
-        $finder = new TemplateFinder($paths);
-        $renderer = new TemplateEngine($finder, __DIR__.'/cache', LoaderMode::RECOMPILE_ALWAYS);
-
-        $this->assertEquals('foobar', $renderer->render('example.html', ['data' => 'foobar']));
-        $this->assertEquals('foobar', $renderer->render('core/index.html', ['data' => 'foobar']));
-        $this->assertEquals('foobar', $renderer->renderString('{{ data }}', ['data' => 'foobar']));
-        $this->assertInstanceOf(TemplateEngine::class, $renderer->compile('core/index.html', ['data' => 'foobar']));
-
-        $this->assertTrue($renderer->isValid('core/index.html'));
     }
 }

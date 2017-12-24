@@ -15,14 +15,14 @@ namespace Mindy\Template\Tests;
 use Mindy\Template\Finder\FinderInterface;
 use Mindy\Template\Finder\StaticTemplateFinder;
 
-class IncludeTest extends AbstractTemplateTestCase
+class ExtendNodeTest extends AbstractTemplateTestCase
 {
     protected function getTemplatePaths(): array
     {
         return [
-            'example.html' => 'just a text',
-            'example1.html' => 'example1',
-            'example2.html' => '{{ foo }}',
+            'base.html' => 'Yo',
+            'clean.html' => 'No',
+            'params.html' => '{{ foo }}',
         ];
     }
 
@@ -35,23 +35,33 @@ class IncludeTest extends AbstractTemplateTestCase
     {
         return [
             [
-                '{% include "example.html" %}',
-                'just a text',
+                '{% extends "base.html" %}',
+                'Yo',
                 [],
             ],
             [
-                '{% include "example1.html" %}',
-                'example1',
-                [],
+                '{% extends "base.html" if x %}',
+                'Yo',
+                ['x' => true],
             ],
             [
-                '{% include "example2.html" %}',
+                '{% extends "base.html" if x %}',
                 '',
-                [],
+                ['x' => false],
             ],
             [
-                '{% include "example2.html" with ["foo" => "foobar"] %}',
-                'foobar',
+                '{% extends x ? "base.html" : "clean.html" %}',
+                'Yo',
+                ['x' => true],
+            ],
+            [
+                '{% extends x ? "base.html" : "clean.html" %}',
+                'No',
+                ['x' => false],
+            ],
+            [
+                '{% extends "params.html" with ["foo" => "hello world"] %}',
+                'hello world',
                 [],
             ],
         ];

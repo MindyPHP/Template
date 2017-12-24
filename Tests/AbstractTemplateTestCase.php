@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Mindy Framework.
  * (c) 2017 Maxim Falaleev
@@ -11,7 +13,7 @@
 namespace Mindy\Template\Tests;
 
 use Mindy\Template\Finder\FinderInterface;
-use Mindy\Template\Finder\TemplateFinder;
+use Mindy\Template\Finder\StaticTemplateFinder;
 use Mindy\Template\LoaderMode;
 use Mindy\Template\TemplateEngine;
 use PHPUnit\Framework\TestCase;
@@ -42,7 +44,7 @@ abstract class AbstractTemplateTestCase extends TestCase
      */
     public function tearDown()
     {
-        $this->filesystem->remove(__DIR__ . '/cache');
+        $this->filesystem->remove(__DIR__.'/cache');
         $this->templateEngine = null;
     }
 
@@ -52,7 +54,7 @@ abstract class AbstractTemplateTestCase extends TestCase
     protected function getTemplatePaths(): array
     {
         return [
-            __DIR__ . '/templates'
+            __DIR__.'/templates',
         ];
     }
 
@@ -61,7 +63,7 @@ abstract class AbstractTemplateTestCase extends TestCase
      */
     protected function getTemplateFinder(): FinderInterface
     {
-        return new TemplateFinder($this->getTemplatePaths());
+        return new StaticTemplateFinder($this->getTemplatePaths());
     }
 
     /**
@@ -71,7 +73,7 @@ abstract class AbstractTemplateTestCase extends TestCase
     {
         return new TemplateEngine(
             $this->getTemplateFinder(),
-            __DIR__ . '/cache',
+            __DIR__.'/cache',
             LoaderMode::RECOMPILE_ALWAYS
         );
     }

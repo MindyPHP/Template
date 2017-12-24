@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Mindy Framework.
  * (c) 2017 Maxim Falaleev
@@ -18,8 +20,7 @@ class StaticTemplateFinder implements FinderInterface
     protected $templates = [];
 
     /**
-     * MockTemplateFinder constructor.
-     * @param array $templates
+     * {@inheritdoc}
      */
     public function __construct(array $templates = [])
     {
@@ -27,9 +28,7 @@ class StaticTemplateFinder implements FinderInterface
     }
 
     /**
-     * @param string $template
-     *
-     * @return string|null
+     * {@inheritdoc}
      */
     public function find(string $template)
     {
@@ -41,27 +40,31 @@ class StaticTemplateFinder implements FinderInterface
     }
 
     /**
-     * @param string $path
-     *
-     * @return string
+     * {@inheritdoc}
      */
-    public function getContents(string $path): string
+    public function getContents(string $path)
     {
-        return $this->templates[$path];
+        if (array_key_exists($path, $this->templates)) {
+            return $this->templates[$path];
+        }
+
+        return null;
     }
 
     /**
-     * @param string $path
-     *
-     * @return int|null
+     * {@inheritdoc}
      */
     public function lastModified(string $path)
     {
-        return time();
+        if (array_key_exists($path, $this->templates)) {
+            return time();
+        }
+
+        return null;
     }
 
     /**
-     * @return array
+     * {@inheritdoc}
      */
     public function getPaths(): array
     {
