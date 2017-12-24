@@ -25,29 +25,36 @@ class Helper
 
     public static function method_exists($obj, $method)
     {
-        if ($obj === null) {
-            return false;
+        if (is_object($obj)) {
+            return method_exists($obj, $method);
         }
 
-        return method_exists($obj, $method);
+        return false;
     }
 
-    public static function implode($obj, $glue)
+    public static function implode($obj = null, $glue = '')
     {
-        if ($obj === null) {
+        return implode($glue, ($obj instanceof Traversable) ? iterator_to_array($obj) : (array) $obj);
+    }
+
+    /**
+     * @param null $obj
+     * @param string $glue
+     * @return string
+     * @deprecated since 4.0
+     */
+    public static function join($obj = null, $glue = '')
+    {
+        return self::implode($obj, $glue);
+    }
+
+    public static function explode($obj = null, $delimiter = ':')
+    {
+        if (is_null($obj)) {
             return [];
         }
 
-        return implode($glue, $obj);
-    }
-
-    public static function explode($obj, $delimiter)
-    {
-        if ($obj === null) {
-            return [];
-        }
-
-        return explode($delimiter, $obj);
+        return explode($delimiter, (string) $obj);
     }
 
     public static function abs($obj = null)
@@ -55,13 +62,19 @@ class Helper
         return abs(intval($obj));
     }
 
-    public static function slice($obj, $start, $length)
+    public static function slice($obj, $start, $length = null)
     {
-        if (is_array($obj)) {
-            return array_slice($obj, $start, $length);
-        } elseif (is_string($obj)) {
-            return mb_substr($obj, $start, $length, self::$encoding);
+        if ($obj instanceof Traversable) {
+            $obj = iterator_to_array($obj);
         }
+
+        if (is_array($obj)) {
+            return array_slice($obj, $start, $length === null ? count($obj) : $length);
+        } elseif (is_string($obj)) {
+            return mb_substr($obj, $start, $length === null ? self::length($obj) : $length, self::$encoding);
+        }
+
+        return null;
     }
 
     public static function startswith($obj, $needle)
@@ -69,34 +82,27 @@ class Helper
         return mb_strpos((string) $obj, $needle, 0, self::$encoding) === 0;
     }
 
+    public static function istartswith($obj, $needle)
+    {
+        return mb_strpos(self::lower($obj), self::lower($needle), 0, self::$encoding) === 0;
+    }
+
     public static function contains($obj, $needle)
     {
         return mb_strpos((string) $obj, $needle, 0, self::$encoding) !== false;
     }
 
-    public static function bytes($obj = null, $decimals = 1, $dec = '.', $sep = ',')
+    public static function icontains($obj, $needle)
     {
-        $obj = max(0, intval($obj));
-        $places = strlen($obj);
-        if ($places <= 9 && $places >= 7) {
-            $obj = number_format($obj / 1048576, $decimals, $dec, $sep);
-
-            return "$obj MB";
-        } elseif ($places >= 10) {
-            $obj = number_format($obj / 1073741824, $decimals, $dec, $sep);
-
-            return "$obj GB";
-        }
-        $obj = number_format($obj / 1024, $decimals, $dec, $sep);
-
-        return "$obj KB";
+        return mb_strpos(self::lower($obj), self::lower($needle), 0, self::$encoding) !== false;
     }
 
     public static function capitalize($obj)
     {
-        $str = (string) $obj;
-
-        return mb_strtoupper(mb_substr($str, 0, 1, self::$encoding), self::$encoding).mb_strtolower(mb_substr($str, 1, mb_strlen($str), self::$encoding), self::$encoding);
+        return self::upper(
+            mb_substr((string) $obj, 0, 1, self::$encoding)).
+            self::lower(mb_substr((string) $obj, 1, self::length((string) $obj), self::$encoding)
+        );
     }
 
     public static function cycle($obj = null)
@@ -122,14 +128,12 @@ class Helper
 
     public static function strtotime($obj = null)
     {
-        return (string) $obj;
+        return strtotime((string) $obj);
     }
 
     public static function dump($obj = null)
     {
-        echo '<pre>';
-        print_r($obj);
-        echo '</pre>';
+        return sprintf('<pre>%s</pre>', print_r($obj, true));
     }
 
     public static function e($obj = null, $force = false)
@@ -142,18 +146,18 @@ class Helper
         return htmlspecialchars((string) $obj, ENT_QUOTES, self::$encoding, $force);
     }
 
-    public static function first($obj = null, $default = null)
+    public static function first($obj = null)
     {
         if (is_string($obj)) {
-            return strlen($obj) ? substr($obj, 0, 1) : $default;
+            return substr($obj, 0, 1);
         }
         $obj = $obj instanceof Traversable ? iterator_to_array($obj) : (array) $obj;
         $keys = array_keys($obj);
         if (count($keys)) {
-            return $obj[$keys[0]];
+            return $obj[current($keys)];
         }
 
-        return $default;
+        return null;
     }
 
     public static function format($obj, $args)
@@ -180,14 +184,10 @@ class Helper
     {
         if (is_null($obj)) {
             return true;
-        } elseif (is_array($obj)) {
-            return empty($obj);
-        } elseif (is_string($obj)) {
-            return strlen($obj) == 0;
-        } elseif ($obj instanceof Countable) {
-            return count($obj) ? false : true;
+        } elseif (is_array($obj) || is_string($obj) || $obj instanceof Countable) {
+            return self::length($obj) == 0;
         } elseif ($obj instanceof Traversable) {
-            return iterator_count($obj);
+            return iterator_count($obj) === 0;
         }
 
         return false;
@@ -197,10 +197,8 @@ class Helper
     {
         if (is_scalar($obj) || is_null($obj)) {
             $obj = is_numeric($obj) ? intval($obj) : strlen($obj);
-        } elseif (is_array($obj)) {
-            $obj = count($obj);
-        } elseif ($obj instanceof Traversable) {
-            $obj = iterator_count($obj);
+        } elseif (is_array($obj) || $obj instanceof Countable || $obj instanceof Traversable) {
+            $obj = self::length($obj);
         } else {
             return false;
         }
@@ -212,20 +210,13 @@ class Helper
     {
         if (is_scalar($obj) || is_null($obj)) {
             $obj = is_numeric($obj) ? intval($obj) : strlen($obj);
-        } elseif (is_array($obj)) {
-            $obj = count($obj);
-        } elseif ($obj instanceof Traversable) {
-            $obj = iterator_count($obj);
+        } elseif (is_array($obj) || $obj instanceof Countable || $obj instanceof Traversable) {
+            $obj = self::length($obj);
         } else {
             return false;
         }
 
         return abs($obj % 2) == 1;
-    }
-
-    public static function join($obj = null, $glue = '')
-    {
-        return implode($glue, ($obj instanceof Traversable) ? iterator_to_array($obj) : (array) $obj);
     }
 
     public static function json_encode($obj = null)
@@ -235,36 +226,43 @@ class Helper
 
     public static function keys($obj = null)
     {
+        if ($obj instanceof Traversable) {
+            $obj = iterator_to_array($obj);
+        }
+
         if (is_array($obj)) {
             return array_keys($obj);
-        } elseif ($obj instanceof Traversable) {
-            return array_keys(iterator_to_array($obj));
         }
+
+        return [];
     }
 
-    public static function last($obj = null, $default = null)
+    public static function last($obj = null)
     {
         if (is_string($obj)) {
-            return strlen($obj) ? substr($obj, -1) : $default;
+            return mb_substr($obj, -1, 1, self::$encoding);
         }
+
         $obj = ($obj instanceof Traversable) ? iterator_to_array($obj) : (array) $obj;
         $keys = array_keys($obj);
         if ($len = count($keys)) {
-            return $obj[$keys[$len - 1]];
+            return $obj[end($keys)];
         }
 
-        return $default;
+        return null;
     }
 
     public static function length($obj = null)
     {
-        if (is_string($obj)) {
+        if (is_string($obj) || is_numeric($obj)) {
             return mb_strlen((string) $obj, self::$encoding);
         } elseif (is_array($obj) || ($obj instanceof Countable)) {
             return count($obj);
         } elseif ($obj instanceof Traversable) {
             return iterator_count($obj);
         }
+
+        return 0;
     }
 
     public static function is_array($obj = null)
@@ -384,11 +382,6 @@ class Helper
         return round($obj, $precision);
     }
 
-    public static function toint($obj = null)
-    {
-        return (int) $obj;
-    }
-
     public static function has_key($obj, $key)
     {
         return array_key_exists($key, (array) $obj);
@@ -423,5 +416,51 @@ class Helper
         }
 
         return (string) $obj;
+    }
+
+    /**
+     * @param null $obj
+     * @return int
+     * @deprecated since 4.0
+     */
+    public static function toint($obj = null)
+    {
+        return self::to_int($obj);
+    }
+
+    /**
+     * @param null $obj
+     * @return int
+     */
+    public static function to_int($obj = null): int
+    {
+        return (int)$obj;
+    }
+
+    /**
+     * @param null $obj
+     * @return string
+     */
+    public static function to_string($obj = null): string
+    {
+        return (string)$obj;
+    }
+
+    /**
+     * @param null $obj
+     * @return array
+     */
+    public static function to_array($obj = null): array
+    {
+        return (array)$obj;
+    }
+
+    /**
+     * @param null $obj
+     * @return float
+     */
+    public static function to_float($obj = null): float
+    {
+        return (float)$obj;
     }
 }
