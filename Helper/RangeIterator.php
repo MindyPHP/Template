@@ -27,6 +27,7 @@ class RangeIterator implements Iterator
     public function __construct($lower, $upper, $step = 1)
     {
         $this->lower = $lower;
+        $this->current = $lower;
         $this->upper = $upper;
         $this->step = $step;
     }
@@ -59,6 +60,8 @@ class RangeIterator implements Iterator
     public function rewind()
     {
         $this->current = $this->lower;
+
+        return $this;
     }
 
     public function key()

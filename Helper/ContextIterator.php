@@ -23,8 +23,10 @@ use Traversable;
  */
 class ContextIterator implements Iterator
 {
-    protected $sequence;
-
+    /**
+     * @var ArrayIterator
+     */
+    public $sequence;
     /**
      * @var int twig compatibility
      */
@@ -59,6 +61,11 @@ class ContextIterator implements Iterator
      */
     public $revcounter0;
 
+    /**
+     * ContextIterator constructor.
+     * @param $sequence
+     * @param $parent
+     */
     public function __construct($sequence, $parent)
     {
         if ($sequence instanceof IteratorAggregate) {
