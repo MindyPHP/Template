@@ -340,6 +340,16 @@ class Helper
         return htmlspecialchars_decode((string) $obj, ENT_QUOTES);
     }
 
+    public static function raw($obj = null)
+    {
+        return htmlspecialchars_decode((string) $obj, ENT_QUOTES);
+    }
+
+    public static function safe($obj = null)
+    {
+        return htmlspecialchars_decode((string) $obj, ENT_QUOTES);
+    }
+
     public static function chunk($obj, $by)
     {
         return $obj ? array_chunk($obj, $by) : null;

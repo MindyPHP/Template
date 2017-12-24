@@ -19,8 +19,8 @@ use Mindy\Template\CompilerInterface;
  */
 class FilterExpression extends Expression
 {
-    protected $node;
-    protected $filters;
+    private $node;
+    private $filters = [];
 
     public function __construct($node, $filters, $line)
     {
@@ -29,9 +29,9 @@ class FilterExpression extends Expression
         $this->filters = $filters;
     }
 
-    public function isRaw()
+    public function getFilters(): array
     {
-        return in_array('raw', $this->filters) || in_array('safe', $this->filters);
+        return $this->filters;
     }
 
     public function appendFilter($filter)
@@ -48,39 +48,16 @@ class FilterExpression extends Expression
         return $this;
     }
 
-    protected function isNeedEscape(array $saveFilterNames): bool
-    {
-        foreach ($this->filters as $i => $filter) {
-            if (in_array($filter[0], $saveFilterNames)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     public function compile(CompilerInterface $compiler, $indent = 0)
     {
-        static $saveFilterNames = ['raw', 'safe'];
-
-        $postponed = [];
-
-        if ($this->isNeedEscape($saveFilterNames)) {
-            $this->appendFilter(['escape', []]);
-        }
-
+        $stack = [];
         for ($i = count($this->filters) - 1; $i >= 0; --$i) {
             list($name, $arguments) = $this->filters[$i];
-            if (in_array($name, $saveFilterNames)) {
-                continue;
-            }
             $compiler->raw('$this->helper(\''.$name.'\', ');
-            $postponed[] = $arguments;
+            $stack[] = $arguments;
         }
-
         $this->node->compile($compiler);
-
-        foreach (array_reverse($postponed) as $arguments) {
+        foreach (array_reverse($stack) as $i => $arguments) {
             foreach ($arguments as $arg) {
                 $compiler->raw(', ');
                 $arg->compile($compiler);

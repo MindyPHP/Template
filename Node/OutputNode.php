@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Mindy\Template\Node;
 
 use Mindy\Template\CompilerInterface;
+use Mindy\Template\Expression\FilterExpression;
 
 /**
  * Class OutputNode.
@@ -27,11 +28,40 @@ class OutputNode extends Node
         $this->expr = $expr;
     }
 
+    /**
+     * @param array $filters
+     * @param array $filterNames
+     * @return bool
+     */
+    protected function isNeedEscape(array $filters, array $filterNames): bool
+    {
+        foreach ($filters as $filter) {
+            list($name, ) = $filter;
+            if (in_array($name, $filterNames)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public function compile(CompilerInterface $compiler, $indent = 0)
     {
+        $escape = true;
+        if ($this->expr instanceof FilterExpression) {
+            $escape = $this->isNeedEscape($this->expr->getFilters(), ['raw', 'safe']);
+        }
+
         $compiler->addTraceInfo($this, $indent);
-        $compiler->raw('echo $this->helper(\'escape\', ', $indent);
-        $this->expr->compile($compiler);
-        $compiler->raw(");\n");
+
+        if ($escape) {
+            $compiler->raw('echo $this->helper(\'escape\', ', $indent);
+            $this->expr->compile($compiler);
+            $compiler->raw(");\n");
+        } else {
+            $compiler->raw('echo ', $indent);
+            $this->expr->compile($compiler);
+            $compiler->raw(";\n");
+        }
     }
 }

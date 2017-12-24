@@ -31,25 +31,26 @@ class BaseTest extends AbstractTemplateTestCase
     public function providerBase()
     {
         return [
-//            ['{{ a }}', ['a' => 'b'], 'b'],
-//            // Concat
-//            ['{{ a ~ b }}', ['a' => 'a', 'b' => 'b'], 'ab'],
-//            // Cycles
-//            ['{% for i in data %}{{ i }}{% endfor %}', ['data' => [1, 2, 3]], '123'],
-//            ['{% for t, i in data %}{% if t > 1 %}{% break %}{% endif %}{{ i }}{% endfor %}', ['data' => [1, 2, 3]], '12'],
-//            // Cycles loop helper
-//            ['{% for i in data %}{{ loop.counter }}{% endfor %}', ['data' => [1, 2, 3]], '123'],
-//            ['{% for i in data %}{{ loop.counter0 }}{% endfor %}', ['data' => [1, 2, 3]], '012'],
-//            ['{% for i in data %}{{ forloop.counter }}{% endfor %}', ['data' => [1, 2, 3]], '123'],
-//            ['{% for i in data %}{{ forloop.counter0 }}{% endfor %}', ['data' => [1, 2, 3]], '012'],
-//            // Math
-//            ['{{ a / b }}', ['a' => 10, 'b' => 2], '5'],
-//            ['{{ a * b }}', ['a' => 10, 'b' => 2], '20'],
-//            ['{{ a + b }}', ['a' => 10, 'b' => 2], '12'],
-//            ['{{ a - b }}', ['a' => 10, 'b' => 2], '8'],
-//            ['{{ a % b }}', ['a' => 10, 'b' => 2], '0'],
+            ['{{ a }}', ['a' => 'b'], 'b'],
+            // Concat
+            ['{{ a ~ b }}', ['a' => 'a', 'b' => 'b'], 'ab'],
+            // Cycles
+            ['{% for i in data %}{{ i }}{% endfor %}', ['data' => [1, 2, 3]], '123'],
+            ['{% for t, i in data %}{% if t > 1 %}{% break %}{% endif %}{{ i }}{% endfor %}', ['data' => [1, 2, 3]], '12'],
+            // Cycles loop helper
+            ['{% for i in data %}{{ loop.counter }}{% endfor %}', ['data' => [1, 2, 3]], '123'],
+            ['{% for i in data %}{{ loop.counter0 }}{% endfor %}', ['data' => [1, 2, 3]], '012'],
+            ['{% for i in data %}{{ forloop.counter }}{% endfor %}', ['data' => [1, 2, 3]], '123'],
+            ['{% for i in data %}{{ forloop.counter0 }}{% endfor %}', ['data' => [1, 2, 3]], '012'],
+            // Math
+            ['{{ a / b }}', ['a' => 10, 'b' => 2], '5'],
+            ['{{ a * b }}', ['a' => 10, 'b' => 2], '20'],
+            ['{{ a + b }}', ['a' => 10, 'b' => 2], '12'],
+            ['{{ a - b }}', ['a' => 10, 'b' => 2], '8'],
+            ['{{ a % b }}', ['a' => 10, 'b' => 2], '0'],
 //            // Helper functions
             ['{{ "test"|contains("tes") }}', [], '1'],
+            ['{{ "<div>123</div>"|safe }}', [], '<div>123</div>'],
             ['{{ "<div>123</div>"|raw }}', [], '<div>123</div>'],
             ['{{ "<div>123</div>"|escape }}', [], '&lt;div&gt;123&lt;/div&gt;'],
             // Escape by default test
