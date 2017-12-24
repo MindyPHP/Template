@@ -26,12 +26,7 @@ class ExtendNodeTest extends AbstractTemplateTestCase
         ];
     }
 
-    protected function getTemplateFinder(): FinderInterface
-    {
-        return new StaticTemplateFinder($this->getTemplatePaths());
-    }
-
-    public function providerInclude()
+    public function providerExtends()
     {
         return [
             [
@@ -68,17 +63,44 @@ class ExtendNodeTest extends AbstractTemplateTestCase
     }
 
     /**
-     * @dataProvider providerInclude
+     * @dataProvider providerExtends
      *
      * @param string $template
      * @param string $result
      * @param array  $data
      */
-    public function testInclude(string $template, string $result, array $data)
+    public function testExtends(string $template, string $result, array $data)
     {
         $this->assertSame(
             $this->templateEngine->renderString($template, $data),
             $result
         );
+    }
+
+    /**
+     * @expectedException \Mindy\Template\SyntaxError
+     * @expectedExceptionMessage multiple extends tags
+     */
+    public function testMultipleExtendException()
+    {
+        $this->templateEngine->renderString('{% extends "base.html" %}{% extends "base.html" %}');
+    }
+
+    /**
+     * @expectedException \Mindy\Template\SyntaxError
+     * @expectedExceptionMessage cannot declare extends inside blocks in line 1 char 20
+     */
+    public function testInBlockExtendException()
+    {
+        $this->templateEngine->renderString('{% block test %}{% extends "base.html" %}{% endblock %}');
+    }
+
+    /**
+     * @expectedException \Mindy\Template\SyntaxError
+     * @expectedExceptionMessage cannot declare extends inside macros
+     */
+    public function testInMacroExtendException()
+    {
+        $this->templateEngine->renderString('{% macro test %}{% extends "base.html" %}{% endmacro %}');
     }
 }

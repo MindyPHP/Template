@@ -46,4 +46,22 @@ class ParentNodeTest extends AbstractTemplateTestCase
             $result
         );
     }
+
+    /**
+     * @expectedException \Mindy\Template\SyntaxError
+     * @expectedExceptionMessage parent must be inside a block
+     */
+    public function testNoParentException()
+    {
+        $this->templateEngine->renderString('{% parent %}');
+    }
+
+    /**
+     * @expectedException \Mindy\Template\SyntaxError
+     * @expectedExceptionMessage cannot call parent block inside macros
+     */
+    public function testNoParentInMacrosException()
+    {
+        $this->templateEngine->renderString('{% macro test %}{% parent %}{% endmacros %}');
+    }
 }

@@ -12,13 +12,13 @@ declare(strict_types=1);
 
 namespace Mindy\Template\Tests;
 
-class ContinueNodeTest extends AbstractTemplateTestCase
+class BreakNodeTest extends AbstractTemplateTestCase
 {
-    public function providerContinue()
+    public function providerBreak()
     {
         return [
             [
-                '{% for x in y %}{% if loop.counter0 > 0 %}{% continue %}{% endif %}{{ x }}{% endfor %}',
+                '{% for x in y %}{% if loop.counter0 > 0 %}{% break %}{% endif %}{{ x }}{% endfor %}',
                 '1',
                 ['y' => [1, 2, 3, 4, 5]],
             ],
@@ -26,13 +26,13 @@ class ContinueNodeTest extends AbstractTemplateTestCase
     }
 
     /**
-     * @dataProvider providerContinue
+     * @dataProvider providerBreak
      *
      * @param string $template
      * @param string $result
      * @param array  $data
      */
-    public function testContinue(string $template, string $result, array $data)
+    public function testBreak(string $template, string $result, array $data)
     {
         $this->assertSame(
             $this->templateEngine->renderString($template, $data),
@@ -42,10 +42,10 @@ class ContinueNodeTest extends AbstractTemplateTestCase
 
     /**
      * @expectedException \Mindy\Template\SyntaxError
-     * @expectedExceptionMessage unexpected continue, not in for loop
+     * @expectedExceptionMessage unexpected break, not in for loop
      */
-    public function testContinueException()
+    public function testBreakException()
     {
-        $this->templateEngine->renderString('{% continue %}');
+        $this->templateEngine->renderString('{% break %}');
     }
 }

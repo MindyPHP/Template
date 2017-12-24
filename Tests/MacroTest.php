@@ -56,7 +56,7 @@ class MacroTest extends AbstractTemplateTestCase
      *
      * @param string $template
      * @param string $result
-     * @param array  $data
+     * @param array $data
      */
     public function testLoadFromString(string $template, string $result, array $data)
     {
@@ -64,5 +64,41 @@ class MacroTest extends AbstractTemplateTestCase
             $this->templateEngine->renderString($template, $data),
             $result
         );
+    }
+
+    /**
+     * @expectedException \Mindy\Template\SyntaxError
+     * @expectedExceptionMessage cannot declare macros inside another macro
+     */
+    public function testNoMacroInMacroException()
+    {
+        $this->templateEngine->renderString('{% macro test %}{% macro foobar %}{% endmacro %}{% endmacro %}');
+    }
+
+    /**
+     * @expectedException \Mindy\Template\SyntaxError
+     * @expectedExceptionMessage cannot declare macros inside blocks
+     */
+    public function testNoMacroInBlockException()
+    {
+        $this->templateEngine->renderString('{% block test %}{% macro foobar %}{% endmacro %}{% endblock %}');
+    }
+
+    /**
+     * @expectedException \Mindy\Template\SyntaxError
+     * @expectedExceptionMessage macro "test" already defined
+     */
+    public function testMacroDuplicateException()
+    {
+        $this->templateEngine->renderString('{% macro test %}{% endmacro %}{% macro test %}{% endmacro %}');
+    }
+
+    /**
+     * @expectedException \Mindy\Template\SyntaxError
+     * @expectedExceptionMessage malformed macro statement
+     */
+    public function testMacroMalformedException()
+    {
+        $this->templateEngine->renderString('{% macro test %}');
     }
 }
