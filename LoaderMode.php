@@ -12,9 +12,24 @@ declare(strict_types=1);
 
 namespace Mindy\Template;
 
+/**
+ * Class LoaderMode
+ */
 final class LoaderMode
 {
     const RECOMPILE_NEVER = -1;
     const RECOMPILE_NORMAL = 0;
     const RECOMPILE_ALWAYS = 1;
+
+    /**
+     * @return array
+     */
+    final public static function getModes(): array
+    {
+        return [
+            self::RECOMPILE_ALWAYS,
+            self::RECOMPILE_NORMAL,
+            self::RECOMPILE_NEVER
+        ];
+    }
 }

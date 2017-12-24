@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace Mindy\Template;
 
-use InvalidArgumentException;
 use Mindy\Template\Finder\FinderInterface;
 use Mindy\Template\Library\LibraryInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -24,9 +23,11 @@ use Symfony\Component\Filesystem\Filesystem;
 /**
  * Class Loader.
  */
-class TemplateEngine implements LoggerAwareInterface
+class TemplateEngine implements TemplateEngineInterface, LoggerAwareInterface
 {
     use LoggerAwareTrait;
+
+    const CLASS_PREFIX = '__MindyTemplate_';
 
     /**
      * @var bool enable exception handler
@@ -50,7 +51,7 @@ class TemplateEngine implements LoggerAwareInterface
      */
     protected $cache = [];
     /**
-     * @var array
+     * @var array|LibraryInterface[]
      */
     protected $libraries = [];
     /**
@@ -70,14 +71,6 @@ class TemplateEngine implements LoggerAwareInterface
      */
     protected $helpers = [];
     /**
-     * @var array
-     */
-    protected $globals = [];
-    /**
-     * @var bool
-     */
-    protected $autoescape = true;
-    /**
      * @var int
      */
     protected $mode;
@@ -88,18 +81,34 @@ class TemplateEngine implements LoggerAwareInterface
      * @param FinderInterface|null $finder
      * @param string|callable      $target
      * @param int                  $mode
-     * @param bool                 $autoescape
+     * @param bool                 $exceptionHandler
      */
-    public function __construct(FinderInterface $finder = null, $target, $mode = LoaderMode::RECOMPILE_NORMAL, bool $autoescape = true)
+    public function __construct(FinderInterface $finder, $target, int $mode = LoaderMode::RECOMPILE_NORMAL, bool $exceptionHandler = false)
     {
         $this->finder = $finder;
         $this->target = is_callable($target) ? call_user_func($target) : $target;
         $this->mode = $mode;
-        $this->autoescape = $autoescape;
+        $this->exceptionHandler = $exceptionHandler;
 
         if (!is_dir($this->target)) {
             (new Filesystem())->mkdir($this->target);
         }
+    }
+
+    /**
+     * @param int $mode
+     */
+    public function setMode(int $mode)
+    {
+        if (false === in_array($mode, LoaderMode::getModes())) {
+            throw new \LogicException(sprintf(
+                'Unknown mode %s, available %s',
+                $mode,
+                implode(',', LoaderMode::getModes())
+            ));
+        }
+
+        $this->mode = $mode;
     }
 
     /**
@@ -113,24 +122,17 @@ class TemplateEngine implements LoggerAwareInterface
     /**
      * @param SyntaxError $exception
      *
-     * @throws SyntaxError
+     * @return string
      */
-    protected function handleSyntaxError(SyntaxError $exception)
+    protected function renderSyntaxError(SyntaxError $exception)
     {
-        if ($this->exceptionHandler) {
-            echo strtr(file_get_contents(__DIR__.'/templates/debug.html'), [
-                '{exception}' => $exception->getMessage(),
-                '{line}' => $exception->getToken()->getLine(),
-                '{source}' => $this->finder->getContents($exception->getTemplateFile()),
-                '{styles}' => implode('', [
-                    file_get_contents(__DIR__.'/templates/core.css'),
-                    file_get_contents(__DIR__.'/templates/exception.css'),
-                ]),
-                '{loader}' => $this,
-            ]);
-            die();
-        }
-        throw $exception;
+        return strtr(file_get_contents(__DIR__.'/templates/exception.html'), [
+            '{exception}' => $exception->getMessage(),
+            '{line}' => $exception->getToken()->getLine(),
+            '{source}' => $exception->getTemplateContent(),
+            '{css}' => file_get_contents(__DIR__.'/templates/prism.css'),
+            '{js}' => file_get_contents(__DIR__.'/templates/prism.js'),
+        ]);
     }
 
     /**
@@ -138,39 +140,9 @@ class TemplateEngine implements LoggerAwareInterface
      *
      * @return string
      */
-    protected function resolveCacheTemplatePath(string $class): string
+    public function resolveCacheTemplatePath(string $class): string
     {
         return sprintf('%s/%s.php', $this->target, $class);
-    }
-
-    /**
-     * @param string $template
-     *
-     * @return $this
-     */
-    public function compile(string $template)
-    {
-        $path = $this->finder->find($template);
-        if (null === $path) {
-            throw new RuntimeException(sprintf('%s is not a valid readable template', $template));
-        }
-
-        $class = ClassGenerator::generateClass($path);
-
-        $target = $this->resolveCacheTemplatePath($class);
-
-        if ($this->isNeedRecompile($target, $path)) {
-            try {
-                $this
-                    ->createCompiler($this->finder->getContents($path))
-                    ->compile($path, $target);
-            } catch (SyntaxError $e) {
-                $e->setTemplateFile($path);
-                $this->handleSyntaxError($e->setMessage($path.': '.$e->getMessage()));
-            }
-        }
-
-        return $this;
     }
 
     /**
@@ -179,7 +151,7 @@ class TemplateEngine implements LoggerAwareInterface
      *
      * @return bool
      */
-    protected function isNeedRecompile(string $cache, string $path): bool
+    public function isNeedRecompile(string $cache, string $path): bool
     {
         switch ($this->mode) {
             case LoaderMode::RECOMPILE_ALWAYS:
@@ -212,7 +184,6 @@ class TemplateEngine implements LoggerAwareInterface
     protected function createParser(string $content): Parser
     {
         $parser = new Parser($this->createLexer($content)->tokenize());
-        $parser->setAutoEscape($this->autoescape);
         $parser->setLibraries($this->libraries);
 
         return $parser;
@@ -220,48 +191,50 @@ class TemplateEngine implements LoggerAwareInterface
 
     /**
      * @param string $content
+     * @param string $path
+     * @param string $class
      *
      * @return Compiler
      */
-    protected function createCompiler(string $content): Compiler
+    protected function createCompiler(string $content, string $path, string $class): Compiler
     {
-        return new Compiler($this->createParser($content)->parse());
+        return new Compiler($this->createParser($content)->parse($path, $class));
     }
 
     /**
-     * @param $template
+     * @param $templatePath
      *
-     * @throws \RuntimeException
-     * @throws \InvalidArgumentException
-     * @throws \Exception
-     *
-     * @return TemplateInterface
+     * @return mixed|null|string
      */
-    public function load($template): TemplateInterface
+    protected function resolveCachedTemplatePath($templatePath)
     {
-        if ($template instanceof Template) {
-            return $template;
-        }
-
-        if (!is_string($template)) {
-            throw new InvalidArgumentException('string expected');
-        }
-
-        if (isset($this->paths[$template])) {
-            $path = $this->paths[$template];
+        if (isset($this->paths[$templatePath])) {
+            $path = $this->paths[$templatePath];
         } else {
-            $path = $this->finder->find($template);
+            $path = $this->finder->find($templatePath);
             if (null === $path) {
                 throw new RuntimeException(sprintf(
                     '%s is not a valid readable template',
-                    $template
+                    $templatePath
                 ));
             }
-            $this->paths[$template] = $path;
+            $this->paths[$templatePath] = $path;
         }
 
-        $class = ClassGenerator::generateClass($path);
+        return $path;
+    }
 
+    /**
+     * @param string $content
+     * @param string $path
+     * @param string $class
+     *
+     * @throws SyntaxError
+     *
+     * @return TemplateInterface
+     */
+    protected function compileAndSaveTemplate(string $content, string $path, string $class): TemplateInterface
+    {
         if (isset($this->cache[$class])) {
             return $this->cache[$class];
         }
@@ -270,20 +243,42 @@ class TemplateEngine implements LoggerAwareInterface
             $target = $this->resolveCacheTemplatePath($class);
 
             if ($this->isNeedRecompile($target, $path)) {
-                try {
-                    $this
-                        ->createCompiler($this->finder->getContents($path))
-                        ->compile($path, $target);
-                } catch (SyntaxError $e) {
-                    $e->setTemplateFile($path);
+                $compiledTemplate = $this
+                    ->createCompiler($content, $target, $class)
+                    ->compile();
 
-                    $this->handleSyntaxError($e->setMessage($path.': '.$e->getMessage()));
-                }
+                file_put_contents($target, $compiledTemplate);
             }
+
             require_once $target;
         }
 
-        return $this->cache[$class] = new $class($this, $this->helpers, $this->variableProviders);
+        return $this->cache[$class] = new $class(
+            $this,
+            $this->getHelpers(),
+            $this->variableProviders
+        );
+    }
+
+    /**
+     * @param string $templatePath
+     *
+     * @throws \RuntimeException
+     * @throws \InvalidArgumentException
+     * @throws \Exception
+     *
+     * @return TemplateInterface
+     */
+    public function load(string $templatePath): TemplateInterface
+    {
+        $path = $this->resolveCachedTemplatePath($templatePath);
+        $class = $this->generateTemplateCacheClass($path);
+
+        return $this->compileAndSaveTemplate(
+            $this->finder->getContents($path),
+            $this->resolveCacheTemplatePath($class),
+            $class
+        );
     }
 
     /**
@@ -293,77 +288,72 @@ class TemplateEngine implements LoggerAwareInterface
      */
     public function loadFromString(string $content): TemplateInterface
     {
-        $name = ClassGenerator::generateName($content);
-        $class = ClassGenerator::generateClass($name);
+        $class = $this->generateTemplateCacheClass($content);
 
-        if (isset($this->cache[$class])) {
-            return $this->cache[$class];
-        }
-
-        $target = $this->resolveCacheTemplatePath($class);
-
-        try {
-            $this
-                ->createCompiler($content)
-                ->compile($name, $target);
-        } catch (SyntaxError $e) {
-            $e->setTemplateFile($name);
-            $this->handleSyntaxError($e->setMessage($name.': '.$e->getMessage()));
-        }
-
-        require_once $target;
-
-        return $this->cache[$class] = new $class($this, $this->helpers, $this->variableProviders);
+        return $this->compileAndSaveTemplate(
+            $content,
+            $this->resolveCacheTemplatePath($class),
+            $class
+        );
     }
 
     /**
-     * @param string $template
+     * @param string $string
      *
-     * @return bool
+     * @return string
      */
-    public function isValid(string $template): bool
+    public function generateTemplateCacheClass(string $string): string
     {
-        $path = $this->finder->find($template);
-        if (null === $path) {
-            throw new RuntimeException(sprintf(
-                '%s is not a valid readable template',
-                $template
-            ));
-        }
-
-        try {
-            $this->createCompiler($this->finder->getContents($path));
-        } catch (\Exception $e) {
-            if ($this->logger) {
-                $this->logger->error($e->getMessage());
-            }
-
-            return false;
-        }
-
-        return true;
+        return self::CLASS_PREFIX.hash('crc32', $string);
     }
 
     /**
      * @param string $template
      * @param array  $data
+     *
+     * @throws SyntaxError
      *
      * @return string
      */
     public function render(string $template, array $data = [])
     {
-        return $this->load($template)->render($data);
+        try {
+            return $this->load($template)->render($data);
+        } catch (SyntaxError $e) {
+            if ($this->exceptionHandler) {
+                $templatePath = $this->finder->find($template);
+
+                $e->setTemplateFile($templatePath);
+                $e->setTemplateContent($this->finder->getContents($templatePath));
+
+                return $this->renderSyntaxError($e);
+            } else {
+                throw $e;
+            }
+        }
     }
 
     /**
      * @param string $template
      * @param array  $data
      *
+     * @throws SyntaxError
+     *
      * @return string
      */
     public function renderString(string $template, array $data = [])
     {
-        return $this->loadFromString($template)->render($data);
+        try {
+            return $this->loadFromString($template)->render($data);
+        } catch (SyntaxError $e) {
+            if ($this->exceptionHandler) {
+                $e->setTemplateContent($template);
+
+                return $this->renderSyntaxError($e);
+            } else {
+                throw $e;
+            }
+        }
     }
 
     /**
@@ -377,6 +367,20 @@ class TemplateEngine implements LoggerAwareInterface
         $this->helpers[$name] = $func;
 
         return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getHelpers(): array
+    {
+        $libraryHelpers = [];
+        foreach ($this->libraries as $library) {
+            /** @var LibraryInterface $library */
+            $libraryHelpers = array_merge($libraryHelpers, $library->getHelpers());
+        }
+
+        return $this->helpers;
     }
 
     /**

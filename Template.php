@@ -12,64 +12,29 @@ declare(strict_types=1);
 
 namespace Mindy\Template;
 
-use Closure;
-use Exception;
-use RuntimeException;
-
-/**
- * Class Template.
- */
 abstract class Template implements TemplateInterface
 {
-    /**
-     * @var string
-     */
-    public $helperClassName = '\Mindy\Template\Helper';
-    /**
-     * @var TemplateEngine
-     */
     protected $loader;
-    /**
-     * @var array
-     */
-    protected $helpers;
-    /**
-     * @var null
-     */
-    protected $parent;
-    /**
-     * @var array
-     */
-    protected $blocks;
-    /**
-     * @var array
-     */
-    protected $macros;
-    /**
-     * @var array
-     */
-    protected $imports;
-    /**
-     * @var array
-     */
-    protected $stack;
-    /**
-     * @var array|VariableProviderInterface[]
-     */
+    protected $helpers = [];
     protected $variableProviders = [];
+    protected $parent;
+    protected $blocks = [];
+    protected $macros = [];
+    protected $imports = [];
+    protected $stack;
 
     /**
      * Template constructor.
      *
-     * @param TemplateEngine                    $loader
-     * @param array                             $helpers
-     * @param array|VariableProviderInterface[] $variablesProviders
+     * @param TemplateEngine $loader
+     * @param array          $helpers
+     * @param array          $variableProviders
      */
-    public function __construct(TemplateEngine $loader, $helpers = [], $variablesProviders = [])
+    public function __construct(TemplateEngine $loader, array $helpers = [], array $variableProviders = [])
     {
         $this->loader = $loader;
         $this->helpers = $helpers;
-        $this->variableProviders = $variablesProviders;
+        $this->variableProviders = $variableProviders;
         $this->parent = null;
         $this->blocks = [];
         $this->macros = [];
@@ -77,90 +42,156 @@ abstract class Template implements TemplateInterface
         $this->stack = [];
     }
 
-    public function loadExtends($template)
+    /**
+     * @param string $template
+     *
+     * @return TemplateInterface
+     */
+    public function loadExtends(string $template)
     {
-        if ($template == static::NAME) {
-            throw new Exception('Template cannot be inherited from himself: '.static::NAME);
-        }
         try {
             return $this->loader->load($template);
-        } catch (Exception $e) {
-            throw new RuntimeException(sprintf('error extending %s (%s) line %d',
-                var_export($template, true),
-                $e->getMessage(),
+        } catch (\Exception $e) {
+            throw new \RuntimeException(sprintf(
+                'error extending %s (%s) from %s line %d',
+                var_export($template, true), $e->getMessage(), static::NAME,
                 $this->getLineTrace($e)
             ));
         }
     }
 
-    public function loadInclude($template)
+    /**
+     * @param string $template
+     *
+     * @return TemplateInterface
+     */
+    public function loadInclude(string $template)
     {
         try {
             return $this->loader->load($template);
-        } catch (Exception $e) {
-            throw new RuntimeException(sprintf('error including %s (%s) line %d',
-                var_export($template, true),
-                $e->getMessage(),
+        } catch (\Exception $e) {
+            throw new \RuntimeException(sprintf(
+                'error including %s (%s) from %s line %d',
+                var_export($template, true), $e->getMessage(), static::NAME,
                 $this->getLineTrace($e)
             ));
         }
     }
 
-    public function loadImport($template)
+    /**
+     * @param string $template
+     *
+     * @return string
+     */
+    public function loadImport(string $template)
     {
         try {
             return $this->loader->load($template)->getMacros();
-        } catch (Exception $e) {
-            throw new RuntimeException(sprintf('error importing %s (%s) line %d',
-                var_export($template, true),
-                $e->getMessage(),
+        } catch (\Exception $e) {
+            throw new \RuntimeException(sprintf(
+                'error importing %s (%s) from %s line %d',
+                var_export($template, true), $e->getMessage(), static::NAME,
                 $this->getLineTrace($e)
             ));
         }
     }
 
+    /**
+     * @param $name
+     * @param $context
+     * @param $blocks
+     * @param $macros
+     * @param $imports
+     *
+     * @return string|null
+     */
     public function displayBlock($name, $context, $blocks, $macros, $imports)
     {
         $blocks = $blocks + $this->blocks;
         $macros = $macros + $this->macros;
         $imports = $imports + $this->imports;
+
         if (isset($blocks[$name]) && is_callable($blocks[$name])) {
-            return call_user_func($blocks[$name], $context, $blocks, $macros, $imports);
+            return call_user_func(
+                $blocks[$name], $context, $blocks, $macros, $imports
+            );
+        } else {
+            return null;
         }
     }
 
+    /**
+     * @param $name
+     * @param $context
+     * @param $blocks
+     * @param $macros
+     * @param $imports
+     *
+     * @return mixed
+     */
     public function displayParent($name, $context, $blocks, $macros, $imports)
     {
         $parent = $this;
         while ($parent = $parent->parent) {
-            if (isset($parent->blocks[$name]) && is_callable($parent->blocks[$name])) {
-                return call_user_func($parent->blocks[$name], $context, $blocks, $macros, $imports);
+            if (isset($parent->blocks[$name]) &&
+                is_callable($parent->blocks[$name])) {
+                return call_user_func($parent->blocks[$name], $context, $blocks,
+                    $macros, $imports);
             }
         }
     }
 
-    public function expandMacro($module, $name, $params, $context, $macros, $imports)
+    /**
+     * @param $module
+     * @param $name
+     * @param $params
+     * @param $context
+     * @param $macros
+     * @param $imports
+     * @param $block
+     *
+     * @return mixed
+     */
+    public function expandMacro($module, $name, $params, $context, $macros, $imports, $block)
     {
         $macros = $macros + $this->macros;
         $imports = $imports + $this->imports;
+
         if (isset($module) && isset($imports[$module])) {
             $macros = $macros + $imports[$module];
         }
+
         if (isset($macros[$name]) && is_callable($macros[$name])) {
-            return call_user_func($macros[$name], $params, $context, $macros, $imports);
+            return call_user_func($macros[$name], $params, $context, $macros, $imports, $block);
         }
+
+        return null;
     }
 
+    /**
+     * @param $context
+     * @param $name
+     *
+     * @return $this
+     */
     public function pushContext(&$context, $name)
     {
         if (!array_key_exists($name, $this->stack)) {
             $this->stack[$name] = [];
         }
-        array_push($this->stack[$name], isset($context[$name]) ? $context[$name] : null);
+        array_push($this->stack[$name], isset($context[$name]) ?
+            $context[$name] : null
+        );
 
         return $this;
     }
 
+    /**
+     * @param $context
+     * @param $name
+     *
+     * @return $this
+     */
     public function popContext(&$context, $name)
     {
         if (!empty($this->stack[$name])) {
@@ -170,10 +201,14 @@ abstract class Template implements TemplateInterface
         return $this;
     }
 
-    public function getLineTrace(Exception $e = null)
+    /**
+     * @param \Exception|null $e
+     * @return null
+     */
+    public function getLineTrace(\Exception $e = null)
     {
         if (!isset($e)) {
-            $e = new Exception();
+            $e = new \Exception();
         }
 
         $lines = static::$lines;
@@ -187,13 +222,13 @@ abstract class Template implements TemplateInterface
                 return isset($lines[$line]) ? $lines[$line] : null;
             }
         }
+
+        return null;
     }
 
     /**
      * @param $name
      * @param array $args
-     *
-     * @throws \RuntimeException
      *
      * @return mixed
      */
@@ -201,14 +236,13 @@ abstract class Template implements TemplateInterface
     {
         $args = func_get_args();
         $name = array_shift($args);
-
         if (isset($this->helpers[$name]) && is_callable($this->helpers[$name])) {
             return call_user_func_array($this->helpers[$name], $args);
-        } elseif (($helper = [$this->helperClassName, $name]) && is_callable($helper)) {
+        } elseif (($helper = [Helper::class, $name]) && is_callable($helper)) {
             return call_user_func_array($helper, $args);
         }
 
-        throw new RuntimeException(sprintf('undefined helper "%s" in %s line %d', $name, static::NAME, $this->getLineTrace()));
+        throw new \RuntimeException(sprintf('undefined helper "%s" in %s line %d', $name, static::NAME, $this->getLineTrace()));
     }
 
     /**
@@ -217,22 +251,17 @@ abstract class Template implements TemplateInterface
      * @param array $macros
      * @param array $imports
      *
-     * @return string
+     * @return mixed
      */
     abstract public function display($context = [], $blocks = [], $macros = [], $imports = []);
 
     /**
-     * @param array $context
-     * @param array $blocks
-     * @param array $macros
-     * @param array $imports
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function render(array $context = [], array $blocks = [], array $macros = [], array $imports = []): string
     {
         ob_start();
-        $this->display($this->mergeContext($context), $blocks, $macros, $imports);
+        $this->display($this->mergeContext($context), $blocks, $macros);
 
         return ob_get_clean();
     }
@@ -251,39 +280,54 @@ abstract class Template implements TemplateInterface
         return array_merge($context, ['__context' => array_keys($context)]);
     }
 
+    /**
+     * @param $context
+     * @param $seq
+     *
+     * @return Helper\ContextIterator
+     */
     public function iterate($context, $seq)
     {
-        if (isset($context['loop'])) {
-            $iter = $context['loop'];
-        } elseif (isset($context['forloop'])) {
-            $iter = $context['forloop'];
-        } else {
-            $iter = null;
-        }
-
-        return new Helper\ContextIterator($seq, $iter);
+        return new Helper\ContextIterator($seq, isset($context['loop']) ?
+            $context['loop'] : null);
     }
 
+    /**
+     * @return array
+     */
     public function getBlocks()
     {
         return $this->blocks;
     }
 
+    /**
+     * @return array
+     */
     public function getMacros()
     {
         return $this->macros;
     }
 
-    public function getImports()
+    /**
+     * @return array
+     */
+    public function getImports(): array
     {
         return $this->imports;
     }
 
+    /**
+     * @param $obj
+     * @param $attr
+     * @param array $args
+     *
+     * @return mixed|null
+     */
     public function getAttr($obj, $attr, $args = [])
     {
         if (is_array($obj)) {
             if (isset($obj[$attr])) {
-                if ($obj[$attr] instanceof Closure) {
+                if ($obj[$attr] instanceof \Closure) {
                     if (is_array($args)) {
                         array_unshift($args, $obj);
                     } else {
@@ -296,28 +340,35 @@ abstract class Template implements TemplateInterface
                 return $obj[$attr];
             }
 
-            return;
+            return null;
         } elseif (is_object($obj)) {
             if (is_array($args)) {
                 $callable = [$obj, $attr];
 
-                return is_callable($callable) ? call_user_func_array($callable, $args) : null;
+                return is_callable($callable) ?
+                    call_user_func_array($callable, $args) : null;
             }
             $members = array_keys(get_object_vars($obj));
             $methods = get_class_methods(get_class($obj));
             if (in_array($attr, $members)) {
                 return @$obj->$attr;
-            } elseif (in_array('__call', $methods) && method_exists($obj, $attr)) {
-                return call_user_func_array([$obj, $attr], is_array($args) ? $args : []);
             } elseif (in_array('__get', $methods)) {
                 return $obj->__get($attr);
             }
             $callable = [$obj, $attr];
 
-            return is_callable($callable) ? call_user_func($callable) : null;
+            return is_callable($callable) ?
+                call_user_func($callable) : null;
         }
+
+        return null;
     }
 
+    /**
+     * @param $obj
+     * @param $attrs
+     * @param $value
+     */
     public function setAttr(&$obj, $attrs, $value)
     {
         if (empty($attrs)) {
@@ -335,7 +386,9 @@ abstract class Template implements TemplateInterface
 
                     return;
                 } elseif (property_exists($class, $attr)) {
-                    throw new RuntimeException("inaccessible '$attr' object attribute");
+                    throw new \RuntimeException(
+                        "inaccessible '$attr' object attribute"
+                    );
                 }
                 if ($attr === null || $attr === false || $attr === '') {
                     if ($attr === null) {
@@ -347,7 +400,12 @@ abstract class Template implements TemplateInterface
                     if ($attr === '') {
                         $token = 'empty string';
                     }
-                    throw new RuntimeException(sprintf('invalid object attribute (%s) in %s line %d', $token, static::NAME, $this->getLineTrace()));
+                    throw new \RuntimeException(sprintf(
+                        'invalid object attribute (%s) in %s line %d',
+                        $token,
+                        static::NAME,
+                        $this->getLineTrace()
+                    ));
                 }
                 $obj->{$attr} = null;
             }

@@ -61,7 +61,9 @@ class HelperTest extends TestCase
         $this->assertSame(0, $cycler->count());
         $this->assertSame(1, $cycler->next());
         $this->assertSame(1.0, $cycler->cycle());
-        $this->assertSame(2, $cycler->random(123));
+
+        $cycler = new Cycler(range(1, 1));
+        $this->assertSame(1, $cycler->random());
     }
 
     public function testRangeIterator()
@@ -79,9 +81,11 @@ class HelperTest extends TestCase
         $this->assertSame(1, $range->current());
         $this->assertSame(2, $range->next()->current());
         $this->assertSame(1, $range->rewind()->current());
-        $this->assertSame(2, $range->random(123));
 
         $this->assertTrue($range->includes(2));
         $this->assertFalse($range->includes(123));
+
+        $range = new RangeIterator(1, 1);
+        $this->assertSame(1, $range->random());
     }
 }

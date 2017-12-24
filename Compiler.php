@@ -13,77 +13,57 @@ declare(strict_types=1);
 namespace Mindy\Template;
 
 use Mindy\Template\Node\Node;
-use RuntimeException;
 
 /**
  * Class Compiler.
  */
 class Compiler implements CompilerInterface
 {
-    /**
-     * @var resource
-     */
-    protected $fp;
-    protected $node;
-    /**
-     * @var int
-     */
-    protected $line;
-    protected $trace;
+    private $result;
+    private $module;
+    private $line;
+    private $trace;
 
     /**
      * Compiler constructor.
      *
-     * @param $node
+     * @param Module $module
      */
-    public function __construct($node)
+    public function __construct(Module $module)
     {
-        $this->node = $node;
+        $this->result = '';
+        $this->module = $module;
         $this->line = 1;
         $this->trace = [];
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    private function write($string)
+    {
+        $this->result .= $string;
+
+        return $this;
+    }
+
     public function raw(string $raw, int $indent = 0)
     {
         $this->line = $this->line + substr_count($raw, "\n");
-        if (!fwrite($this->fp, str_repeat(' ', 4 * $indent).$raw)) {
-            throw new RuntimeException('failed writing to file: '.$this->target);
-        }
+        $this->write(str_repeat(' ', 4 * $indent).$raw);
 
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function repr($repr, int $indent = 0)
     {
         $this->raw(var_export($repr, true), $indent);
-
-        return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function compile(string $name, string $target, $indent = 0)
+    public function compile()
     {
-        if (!($this->fp = fopen($target, 'wb'))) {
-            throw new RuntimeException('unable to create target file: '.$target);
-        }
-        $this->node->compile($name, $this, $indent);
-        fclose($this->fp);
+        $this->module->compile($this);
+
+        return $this->result;
     }
 
-    /**
-     * @param $name
-     * @param int $indent
-     *
-     * @return $this
-     */
     public function pushContext($name, $indent = 0)
     {
         $this->raw('$this->pushContext($context, ', $indent);
@@ -93,12 +73,6 @@ class Compiler implements CompilerInterface
         return $this;
     }
 
-    /**
-     * @param $name
-     * @param int $indent
-     *
-     * @return $this
-     */
     public function popContext($name, $indent = 0)
     {
         $this->raw('$this->popContext($context, ', $indent);
@@ -108,42 +82,25 @@ class Compiler implements CompilerInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function addTraceInfo(Node $node, int $indent = 0, bool $line = true)
     {
         $this->raw(
             '/* line '.$node->getLine().' -> '.($this->line + 1).
             " */\n", $indent
         );
-
         if ($line) {
             $this->trace[$this->line] = $node->getLine();
         }
     }
 
-    /**
-     * @param bool $export
-     *
-     * @return array|mixed
-     */
     public function getTraceInfo(bool $export = false)
     {
         if ($export) {
-            return str_replace(["\n", ' '], '', var_export($this->trace, true));
+            return str_replace(
+                ["\n", ' '], '', var_export($this->trace, true)
+            );
         }
 
         return $this->trace;
-    }
-
-    /**
-     * Free resources.
-     */
-    public function __destruct()
-    {
-        if (is_resource($this->fp)) {
-            fclose($this->fp);
-        }
     }
 }

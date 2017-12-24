@@ -19,9 +19,6 @@ use Mindy\Template\CompilerInterface;
  */
 class OutputNode extends Node
 {
-    /**
-     * @var \Mindy\Template\NodeList
-     */
     protected $expr;
 
     public function __construct($expr, $line)
@@ -33,8 +30,8 @@ class OutputNode extends Node
     public function compile(CompilerInterface $compiler, $indent = 0)
     {
         $compiler->addTraceInfo($this, $indent);
-        $compiler->raw('echo ', $indent);
+        $compiler->raw('echo $this->helper(\'escape\', ', $indent);
         $this->expr->compile($compiler);
-        $compiler->raw(";\n");
+        $compiler->raw(");\n");
     }
 }

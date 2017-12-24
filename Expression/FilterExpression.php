@@ -21,26 +21,17 @@ class FilterExpression extends Expression
 {
     protected $node;
     protected $filters;
-    protected $autoEscape;
 
-    public function __construct($node, $filters, $autoEscape, $line)
+    public function __construct($node, $filters, $line)
     {
         parent::__construct($line);
         $this->node = $node;
         $this->filters = $filters;
-        $this->autoEscape = $autoEscape;
     }
 
     public function isRaw()
     {
         return in_array('raw', $this->filters) || in_array('safe', $this->filters);
-    }
-
-    public function setAutoEscape($autoEscape = true)
-    {
-        $this->autoEscape = $autoEscape;
-
-        return $this;
     }
 
     public function appendFilter($filter)
@@ -57,30 +48,30 @@ class FilterExpression extends Expression
         return $this;
     }
 
-    public function compile(CompilerInterface $compiler, $indent = 0)
+    protected function isNeedEscape(array $saveFilterNames): bool
     {
-        static $rawNames = ['raw', 'safe'];
-
-        $safe = false;
-        $postponed = [];
-
         foreach ($this->filters as $i => $filter) {
-            if (in_array($filter[0], $rawNames)) {
-                $safe = true;
-                break;
+            if (in_array($filter[0], $saveFilterNames)) {
+                return false;
             }
         }
 
-        if ($this->autoEscape && !$safe) {
+        return true;
+    }
+
+    public function compile(CompilerInterface $compiler, $indent = 0)
+    {
+        static $saveFilterNames = ['raw', 'safe'];
+
+        $postponed = [];
+
+        if ($this->isNeedEscape($saveFilterNames)) {
             $this->appendFilter(['escape', []]);
         }
 
         for ($i = count($this->filters) - 1; $i >= 0; --$i) {
-            if ($this->filters[$i] === 'raw') {
-                continue;
-            }
             list($name, $arguments) = $this->filters[$i];
-            if (in_array($name, $rawNames)) {
+            if (in_array($name, $saveFilterNames)) {
                 continue;
             }
             $compiler->raw('$this->helper(\''.$name.'\', ');

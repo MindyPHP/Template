@@ -46,12 +46,8 @@ class RangeIterator implements Iterator
         return $n <= $this->lower && $n >= $this->upper;
     }
 
-    public function random($seed = null)
+    public function random()
     {
-        if (isset($seed)) {
-            mt_srand($seed);
-        }
-
         return $this->upper >= $this->lower ?
             mt_rand($this->lower, $this->upper) :
             mt_rand($this->upper, $this->lower);

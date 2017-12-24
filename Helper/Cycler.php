@@ -41,12 +41,8 @@ class Cycler implements IteratorAggregate
         return $this->elements[($this->idx++) % ($this->length)];
     }
 
-    public function random($seed = null)
+    public function random()
     {
-        if (isset($seed)) {
-            mt_srand($seed);
-        }
-
         return $this->elements[mt_rand(0, $this->length - 1)];
     }
 

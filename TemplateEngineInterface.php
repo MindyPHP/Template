@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace Mindy\Template;
 
-interface RendererInterface
+interface TemplateEngineInterface
 {
     /**
      * @param string $template absolute path to template

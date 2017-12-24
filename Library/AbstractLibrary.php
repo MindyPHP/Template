@@ -11,6 +11,8 @@ declare(strict_types=1);
  */
 
 namespace Mindy\Template\Library;
+use Mindy\Template\Parser;
+use Mindy\Template\TokenStream;
 
 /**
  * Class Library.
@@ -27,12 +29,12 @@ abstract class AbstractLibrary implements LibraryInterface
     protected $stream;
 
     /**
-     * @return array
+     * {@inheritdoc}
      */
     abstract public function getHelpers();
 
     /**
-     * @return array
+     * {@inheritdoc}
      */
     public function getTags()
     {
@@ -40,9 +42,7 @@ abstract class AbstractLibrary implements LibraryInterface
     }
 
     /**
-     * @param Parser $parser
-     *
-     * @return $this
+     * {@inheritdoc}
      */
     public function setParser(Parser $parser)
     {
@@ -52,9 +52,7 @@ abstract class AbstractLibrary implements LibraryInterface
     }
 
     /**
-     * @param TokenStream $stream
-     *
-     * @return $this
+     * {@inheritdoc}
      */
     public function setStream(TokenStream $stream)
     {

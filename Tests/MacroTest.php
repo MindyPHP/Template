@@ -18,22 +18,22 @@ class MacroTest extends AbstractTemplateTestCase
     {
         return [
             [
-                '{% macro example() %}hello world{% endmacro %}{{ @example() }}',
+                '{% macro example(text) %}{% if text %}{{ text }}{% else %}hello world{% endif %}{% endmacro %}{% call example() %}',
                 'hello world',
                 [],
             ],
             [
-                '{% macro example() %}hello world{% endmacro %}{{ @example }}',
+                '{% macro example() %}hello world{% endmacro %}{% call example %}',
                 'hello world',
                 [],
             ],
             [
-                '{% macro example() %}{{ variable }}{% endmacro %}{{ @example }}',
+                '{% macro example() %}{{ variable }}{% endmacro %}{% call example %}',
                 'hello world',
                 ['variable' => 'hello world'],
             ],
             [
-                '{% macro example(foo, bar) %}{{ foo }}:{{ bar }}{% endmacro %}{{ @example("foo","bar") }}',
+                '{% macro example(foo, bar) %}{{ foo }}:{{ bar }}{% endmacro %}{% call example("foo","bar") %}',
                 'foo:bar',
                 [
                     'foo' => 'hello',
@@ -41,7 +41,7 @@ class MacroTest extends AbstractTemplateTestCase
                 ],
             ],
             [
-                '{% macro example(foo, bar) %}{{ foo }}:{{ bar }}{% endmacro %}{{ @example(foo, bar) }}',
+                '{% macro example(foo, bar) %}{{ foo }}:{{ bar }}{% endmacro %}{% call example(foo, bar) %}',
                 'hello:world',
                 [
                     'foo' => 'hello',

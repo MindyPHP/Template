@@ -17,23 +17,23 @@ namespace Mindy\Template;
  */
 class TokenStream
 {
-    protected $tokens;
-    protected $currentToken;
-    protected $queue;
-    protected $cursor;
-    protected $eos;
+    private $tokens;
+    private $currentToken;
+    private $queue;
+    private $cursor;
+    private $eos;
 
     public function __construct(array $tokens)
     {
         $this->tokens = $tokens;
-        $this->currentToken = null;
+        $this->currentToken = new Token(Token::EOF, null, 1, 1);
         $this->queue = [];
         $this->cursor = 0;
         $this->eos = false;
         $this->next();
     }
 
-    public function next($queue = true)
+    public function next(): Token
     {
         if ($this->eos) {
             return $this->currentToken;
@@ -50,7 +50,7 @@ class TokenStream
         return $old;
     }
 
-    public function look($t = 1)
+    public function look(int $t = 1): Token
     {
         --$t;
         $length = count($this->tokens);
@@ -64,7 +64,7 @@ class TokenStream
         return $this->tokens[$this->cursor + $t];
     }
 
-    public function skip($times = 1)
+    public function skip(int $times = 1)
     {
         for ($i = 0; $i < $times; ++$i) {
             $this->next();
@@ -73,7 +73,7 @@ class TokenStream
         return $this;
     }
 
-    public function expect($primary, $secondary = null)
+    public function expect($primary, $secondary = null): Token
     {
         $token = $this->getCurrentToken();
         if (is_null($secondary) && !is_int($primary)) {
@@ -91,7 +91,13 @@ class TokenStream
             if ($token->getType() === Token::EOF) {
                 throw new SyntaxError('unexpected end of file', $token);
             }
-            throw new SyntaxError(sprintf('unexpected "%s", expecting %s', str_replace("\n", '\n', $token->getValue()), $expecting), $token);
+            throw new SyntaxError(
+                    sprintf(
+                        'unexpected "%s", expecting %s',
+                        str_replace("\n", '\n', $token->getValue()), $expecting
+                    ),
+                    $token
+                );
         }
         $this->next();
 
@@ -107,12 +113,12 @@ class TokenStream
         return $this;
     }
 
-    public function test($primary, $secondary = null)
+    public function test($primary, $secondary = null): bool
     {
         return $this->getCurrentToken()->test($primary, $secondary);
     }
 
-    public function consume($primary, $secondary = null)
+    public function consume($primary, $secondary = null): bool
     {
         if ($this->test($primary, $secondary)) {
             $this->expect($primary, $secondary);
@@ -123,17 +129,17 @@ class TokenStream
         return false;
     }
 
-    public function isEOS()
+    public function isEOS(): bool
     {
         return $this->eos;
     }
 
-    public function getCurrentToken()
+    public function getCurrentToken(): Token
     {
         return $this->currentToken;
     }
 
-    public function getTokens()
+    public function getTokens(): array
     {
         return $this->tokens;
     }

@@ -17,24 +17,26 @@ namespace Mindy\Template;
  */
 class Token
 {
-    protected $type;
-    protected $value;
-    protected $line;
-    protected $char;
+    private $type;
+    private $value;
+    private $line;
+    private $char;
 
     const EOF = -1;
     const TEXT = 0;
-    const BLOCK_START = 1;
-    const OUTPUT_START = 2;
-    const BLOCK_END = 3;
-    const OUTPUT_END = 4;
-    const NAME = 5;
-    const NUMBER = 6;
-    const STRING = 7;
-    const OPERATOR = 8;
-    const CONSTANT = 9;
+    const BLOCK_BEGIN = 1;
+    const OUTPUT_BEGIN = 2;
+    const RAW_BEGIN = 3;
+    const BLOCK_END = 4;
+    const OUTPUT_END = 5;
+    const RAW_END = 6;
+    const NAME = 7;
+    const NUMBER = 8;
+    const STRING = 9;
+    const OPERATOR = 10;
+    const CONSTANT = 11;
 
-    public function __construct($type, $value, $line, $char)
+    public function __construct($type, $value, int $line, int $char)
     {
         $this->type = $type;
         $this->value = $value;
@@ -42,52 +44,7 @@ class Token
         $this->char = $char;
     }
 
-    public static function getTypeAsString($type, $canonical = false)
-    {
-        if (is_string($type)) {
-            return $canonical ? (__CLASS__.'::'.$type) : $type;
-        }
-
-        switch ($type) {
-            case self::EOF:
-                $name = 'EOF';
-                break;
-            case self::TEXT:
-                $name = 'TEXT';
-                break;
-            case self::BLOCK_START:
-                $name = 'BLOCK_START';
-                break;
-            case self::OUTPUT_START:
-                $name = 'OUTPUT_START';
-                break;
-            case self::BLOCK_END:
-                $name = 'BLOCK_END';
-                break;
-            case self::OUTPUT_END:
-                $name = 'OUTPUT_END';
-                break;
-            case self::NAME:
-                $name = 'NAME';
-                break;
-            case self::NUMBER:
-                $name = 'NUMBER';
-                break;
-            case self::STRING:
-                $name = 'STRING';
-                break;
-            case self::OPERATOR:
-                $name = 'OPERATOR';
-                break;
-            case self::CONSTANT:
-                $name = 'CONSTANT';
-                break;
-        }
-
-        return $canonical ? (__CLASS__.'::'.$name) : $name;
-    }
-
-    public static function getTypeError($type)
+    public static function getTypeError($type): string
     {
         switch ($type) {
             case self::EOF:
@@ -96,21 +53,29 @@ class Token
             case self::TEXT:
                 $name = 'text type';
                 break;
-            case self::BLOCK_START:
-                $name = 'block start (either "'.Lexer::BLOCK_START.'" or "'.
-                    Lexer::BLOCK_START_TRIM.'")';
+            case self::BLOCK_BEGIN:
+                $name = 'block begin (either "'.Lexer::BLOCK_BEGIN.'" or "'.
+                    Lexer::BLOCK_BEGIN_TRIM.'")';
                 break;
-            case self::OUTPUT_START:
-                $name = 'block start (either "'.Lexer::OUTPUT_START.'" or "'.
-                    Lexer::OUTPUT_START_TRIM.'")';
+            case self::OUTPUT_BEGIN:
+                $name = 'output begin (either "'.Lexer::OUTPUT_BEGIN.'" or "'.
+                    Lexer::OUTPUT_BEGIN_TRIM.'")';
+                break;
+            case self::RAW_BEGIN:
+                $name = 'raw begin (either "'.Lexer::RAW_BEGIN.'" or "'.
+                    Lexer::RAW_BEGIN_TRIM.'")';
                 break;
             case self::BLOCK_END:
                 $name = 'block end (either "'.Lexer::BLOCK_END.'" or "'.
                     Lexer::BLOCK_END_TRIM.'")';
                 break;
             case self::OUTPUT_END:
-                $name = 'block end (either "'.Lexer::OUTPUT_END.'" or "'.
+                $name = 'output end (either "'.Lexer::OUTPUT_END.'" or "'.
                     Lexer::OUTPUT_END_TRIM.'")';
+                break;
+            case self::RAW_END:
+                $name = 'raw end (either "'.Lexer::RAW_END.'" or "'.
+                    Lexer::RAW_END_TRIM.'")';
                 break;
             case self::NAME:
                 $name = 'name type';
@@ -132,7 +97,7 @@ class Token
         return $name;
     }
 
-    public function test($type, $values = null)
+    public function test($type, $values = null): bool
     {
         if (is_null($values) && !is_int($type)) {
             $values = $type;
@@ -140,37 +105,33 @@ class Token
         }
 
         return ($this->type === $type) && (
-            is_null($values) ||
-            (is_array($values) && in_array($this->value, $values)) ||
-            $this->value == $values
-        );
+                is_null($values) ||
+                (is_array($values) && in_array($this->value, $values)) ||
+                $this->value == $values
+            );
     }
 
-    public function getType($asString = false, $canonical = false)
+    public function getType()
     {
-        if ($asString) {
-            return self::getTypeAsString($this->type, $canonical);
-        }
-
         return $this->type;
     }
 
-    public function getValue()
+    public function getValue(): string
     {
-        return $this->value;
+        return (string) $this->value;
     }
 
-    public function getLine()
+    public function getLine(): int
     {
         return $this->line;
     }
 
-    public function getChar()
+    public function getChar(): int
     {
         return $this->char;
     }
 
-    public function __toString()
+    public function __toString(): string
     {
         return $this->getValue();
     }

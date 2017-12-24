@@ -33,7 +33,7 @@ class ImportTest extends AbstractTemplateTestCase
     {
         return [
             [
-                '{% import "macroses.html" as macro %}{{ @macro.example() }}',
+                '{% import "macroses.html" as macro %}{% call macro.example() %}',
                 'hello world',
                 [],
             ],

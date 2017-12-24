@@ -19,8 +19,18 @@ use Exception;
  */
 class SyntaxError extends Exception
 {
+    /**
+     * @var Token
+     */
     protected $token;
+    /**
+     * @var string
+     */
     protected $path;
+    /**
+     * @var string
+     */
+    protected $content;
 
     /**
      * SyntaxError constructor.
@@ -31,21 +41,13 @@ class SyntaxError extends Exception
     public function __construct($message, Token $token)
     {
         $this->token = $token;
-        $line = $token->getLine();
-        $char = $token->getChar();
-        parent::__construct("$message in line $line char $char");
-    }
 
-    public function setTemplateFile($path)
-    {
-        $this->path = $path;
-
-        return $this;
-    }
-
-    public function getTemplateFile()
-    {
-        return $this->path;
+        parent::__construct(sprintf(
+            '%s in line %s char %s',
+            $message,
+            $token->getLine(),
+            $token->getChar()
+        ));
     }
 
     public function __toString()
@@ -53,14 +55,50 @@ class SyntaxError extends Exception
         return (string) $this->message;
     }
 
-    public function setMessage($message)
+    /**
+     * @param string $path
+     *
+     * @return $this
+     */
+    public function setTemplateFile(string $path)
     {
-        $this->message = $message;
+        $this->path = $path;
 
         return $this;
     }
 
-    public function getToken()
+    /**
+     * @param string $content
+     *
+     * @return $this
+     */
+    public function setTemplateContent(string $content)
+    {
+        $this->content = $content;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTemplateContent()
+    {
+        return $this->content;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTemplateFile(): string
+    {
+        return $this->path;
+    }
+
+    /**
+     * @return Token
+     */
+    public function getToken(): Token
     {
         return $this->token;
     }

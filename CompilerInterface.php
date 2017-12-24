@@ -31,13 +31,9 @@ interface CompilerInterface
     public function getTraceInfo(bool $export = false);
 
     /**
-     * @param string $name
-     * @param string $target
-     * @param int    $indent
-     *
      * @void
      */
-    public function compile(string $name, string $target, $indent = 0);
+    public function compile();
 
     /**
      * @param mixed $repr
