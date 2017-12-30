@@ -338,6 +338,17 @@ class TemplateEngine implements TemplateEngineInterface, LoggerAwareInterface
      * @param array  $data
      *
      * @throws SyntaxError
+     */
+    public function stream(string $template, array $data = [])
+    {
+        echo $this->render($template, $data);
+    }
+
+    /**
+     * @param string $template
+     * @param array  $data
+     *
+     * @throws SyntaxError
      *
      * @return string
      */
