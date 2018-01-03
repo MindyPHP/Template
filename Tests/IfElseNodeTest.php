@@ -27,6 +27,16 @@ class IfElseNodeTest extends AbstractTemplateTestCase
                 '2',
                 ['x' => false],
             ],
+            [
+                '{% if x == 1 %}1{% elseif x == 2 %}2{% endif %}',
+                '2',
+                ['x' => 2],
+            ],
+            [
+                '{% if x == 1 %}1{% elif x == 2 %}2{% endif %}',
+                '2',
+                ['x' => 2],
+            ],
         ];
     }
 

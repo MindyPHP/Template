@@ -266,13 +266,14 @@ class Parser
         $line = $token->getLine();
         $expr = $this->parseExpression();
         $this->stream->expect(Token::BLOCK_END);
-        $body = $this->subparse(['elseif', 'else', 'endif']);
+        $body = $this->subparse(['elif', 'elseif', 'else', 'endif']);
         $tests = [[$expr, $body]];
         $else = null;
 
         $end = false;
         while (!$end) {
             switch ($this->stream->next()->getValue()) {
+                case 'elif':
                 case 'elseif':
                     $expr = $this->parseExpression();
                     $this->stream->expect(Token::BLOCK_END);
