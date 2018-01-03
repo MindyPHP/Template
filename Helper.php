@@ -23,6 +23,56 @@ class Helper
 {
     public static $encoding = 'UTF-8';
 
+    public static function is_array($obj)
+    {
+        return is_array($obj);
+    }
+
+    public static function is_object($obj)
+    {
+        return is_object($obj);
+    }
+
+    public static function is_string($obj)
+    {
+        return is_string($obj);
+    }
+
+    public static function is_numeric($obj)
+    {
+        return is_numeric($obj);
+    }
+
+    public static function get_class($obj)
+    {
+        return get_class($obj);
+    }
+
+    public static function number_format($number , $decimals = 0 , $dec_point = '.' , $thousands_sep = ',')
+    {
+        return number_format($number, $decimals, $dec_point, $thousands_sep);
+    }
+
+    public static function substr_count($obj, $needle)
+    {
+        return mb_substr_count($obj, $needle, self::$encoding);
+    }
+
+    public static function dirname($obj)
+    {
+        return dirname($obj);
+    }
+
+    public static function basename($obj)
+    {
+        return basename($obj);
+    }
+
+    public static function strtr($obj, array $params = [])
+    {
+        return strtr($obj, $params);
+    }
+
     public static function method_exists($obj, $method)
     {
         if (is_object($obj)) {
@@ -263,11 +313,6 @@ class Helper
         }
 
         return 0;
-    }
-
-    public static function is_array($obj = null)
-    {
-        return is_array($obj);
     }
 
     public static function lower($obj = null)
