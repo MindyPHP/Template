@@ -18,7 +18,6 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Class Loader.
@@ -91,7 +90,7 @@ class TemplateEngine implements TemplateEngineInterface, LoggerAwareInterface
         $this->exceptionHandler = $exceptionHandler;
 
         if (!is_dir($this->target)) {
-            (new Filesystem())->mkdir($this->target);
+            mkdir($this->target, 0777, true);
         }
     }
 
