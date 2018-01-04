@@ -114,6 +114,8 @@ class Parser
             'break' => 'parseBreak',
             'continue' => 'parseContinue',
             'extends' => 'parseExtends',
+            'comment' => 'parseComment',
+            'spaceless' => 'parseSpaceless',
             'set' => 'parseSet',
             'block' => 'parseBlock',
             'parent' => 'parseParent',
@@ -122,7 +124,6 @@ class Parser
             'yield' => 'parseYield',
             'import' => 'parseImport',
             'include' => 'parseInclude',
-            'spaceless' => 'parseSpaceless',
         ];
     }
 
@@ -249,7 +250,18 @@ class Parser
         return new NodeList($nodes, $line);
     }
 
-    private function parseSpaceless($token)
+    protected function parseComment($token)
+    {
+        if ($this->stream->consume(Token::BLOCK_END)) {
+            $this->subparse('endcomment');
+            if ($this->stream->next()->getValue() != 'endcomment') {
+                throw new SyntaxError('malformed comment statement', $token);
+            }
+        }
+        $this->stream->expect(Token::BLOCK_END);
+    }
+
+    protected function parseSpaceless($token)
     {
         if ($this->stream->consume(Token::BLOCK_END)) {
             $nodeList = $this->subparse('endspaceless');
@@ -280,14 +292,17 @@ class Parser
                     $body = $this->subparse(['elseif', 'else', 'endif']);
                     $tests[] = [$expr, $body];
                     break;
+
                 case 'else':
                     $this->stream->expect(Token::BLOCK_END);
                     $else = $this->subparse(['endif']);
                     break;
+
                 case 'endif':
                     $this->stream->expect(Token::BLOCK_END);
                     $end = true;
                     break;
+
                 default:
                     throw new SyntaxError('malformed if statement', $token);
                     break;
