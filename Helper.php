@@ -50,12 +50,12 @@ class Helper
 
     public static function number_format($number , $decimals = 0 , $dec_point = '.' , $thousands_sep = ',')
     {
-        return number_format($number, $decimals, $dec_point, $thousands_sep);
+        return number_format((float)$number, $decimals, $dec_point, $thousands_sep);
     }
 
     public static function substr_count($obj, $needle)
     {
-        return mb_substr_count($obj, $needle, self::$encoding);
+        return mb_substr_count((string)$obj, (string)$needle, self::$encoding);
     }
 
     public static function dirname($obj)
