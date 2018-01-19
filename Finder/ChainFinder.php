@@ -52,9 +52,12 @@ class ChainFinder implements FinderInterface
     public function getContents(string $path)
     {
         foreach ($this->finders as $finder) {
-            if ($content = $finder->getContents($path)) {
-                return $content;
+            $content = $finder->getContents($path);
+            if (null === $content) {
+                continue;
             }
+
+            return $content;
         }
 
         return null;

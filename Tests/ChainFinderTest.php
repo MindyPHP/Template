@@ -31,15 +31,13 @@ class ChainFinderTest extends TestCase
         ]);
 
         $this->assertSame('example.html', $chainFinder->getContents($chainFinder->find('example.html')));
-
         $this->assertSame(2, count($chainFinder->getPaths()));
-
         $this->assertSame(time(), $chainFinder->lastModified($chainFinder->find('example.html')));
-
         $this->assertNull($chainFinder->lastModified('foobar.html'));
-
         $this->assertNull($chainFinder->getContents('foobar.html'));
-        
         $this->assertNull($chainFinder->find('foobar.html'));
+
+        $this->assertSame('', $chainFinder->getContents($chainFinder->find('empty.html')));
+        $this->assertNotNull($chainFinder->getContents($chainFinder->find('empty.html')));
     }
 }
